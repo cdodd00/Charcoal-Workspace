@@ -20,42 +20,42 @@ def madLab_quadBodyRig(rigFile=" "):
     mc.file (baseFile + rigFile, force=True, type="mayaAscii", open=True)
     
     #common variables 
-    globalCtSize= 17
+    globalCtSize= 16
     
     centerHipSize= 4
     centerHipY= 2
     centerHipZ= 0
     
-    spineCtSize= 3.5
+    spineCtSize= 3.2
     spineCtScale=.95
     
     headPosCtSize= 3
-    headPosAxis= 'y'
-    headPosX= 0 
-    headPosY= 2
-    headPosZ= 5
+    headPosAxis= 'x'
+    headPosX= -1.5 
+    headPosY= -3
+    headPosZ= 0
     
-    tailCtSize= 0
+    tailCtSize= -1
     tailCtScale= .85
        
-    wingCtSize= -.75
-    wingCtScale= .9
+    wingCtSize= -.5
+    wingCtScale= .95
     
-    clavCtSize= 2.5
-    clavCtDist= 2.5
+    clavCtSize= 3
+    clavCtDist= 3
     
-    armCtSize= 3
-    elbowCtSize= 1.5
-    handCtSize=2.8
-    handCtDist= 1.5
+    armCtSize= 3.3
+    elbowCtSize= 2
+    handCtSize=3
+    handCtDist= 1
     
     hipCtSize=3
-    hipCtDist= 3
+    hipCtDist= 4.5
     
     legCtSize= 3.2
-    kneeCtSize= 1.5
+    kneeCtSize= 2
     footCtSize= 3
-    footCtDist= 1.5
+    footCtDist= 1
     
     sides = ['l','r']
     
@@ -111,13 +111,19 @@ def madLab_quadBodyRig(rigFile=" "):
     tailCtrls= chain.fkCtChain(tailJts,startSize= tailCtSize,scaleFactor= tailCtScale)
     tailCtGp= mc.listRelatives(tailCtrls[0], p=True)
     mc.parent (tailCtGp, rootCt)
-    '''
+    
     #wing ctrls
     for s in sides:
         wingJts= mc.ls("{0}_wing*".format(s) + "*_jt", type='joint')
         #wingCt= ccon.ctrlConst(wingJts,radius= wingCtSize)
         wingCtrls= chain.fkCtChain(wingJts,startSize= wingCtSize,scaleFactor= wingCtScale)
-    '''   
+        for wingCt in wingCtrls:
+            wingHist= mc.listHistory (wingCt)
+            mc.setAttr(wingHist[1]+".sections", 4)
+        #parent wing to spine ct
+        wingCt01Gp= mc.listRelatives(wingCtrls[0],p=True)
+        mc.parent(wingCt01Gp, spineCtrls[1])
+    
     #clav and hip ctrls
     for s in sides:
         hipJt= mc.ls("{0}_hip_jt".format(s), type='joint')
@@ -126,6 +132,7 @@ def madLab_quadBodyRig(rigFile=" "):
         mc.setAttr(hipCt[1]+ ".centerX", hipCtDist)
         if s=='r':
             mc.setAttr(hipCt[1]+ ".centerX",(hipCtDist*-1))
+            
         clavCt= ccon.ctrlConst(clavJt,radius= clavCtSize)#clav
         mc.setAttr(clavCt[1]+ ".centerX", clavCtDist)
         if s=='r':
@@ -176,7 +183,7 @@ def madLab_quadBodyRig(rigFile=" "):
     for s in sides:
         #leg ctrls
         legJts= mc.ls("{0}_leg*".format(s),type='joint')
-        ankleJt= legJts[3]
+        ankleJt= legJts[2]
         legCt= cct.circleCt([ankleJt],axis='y',radius= legCtSize)
         legCt= mc.rename(legCt[0], "{0}_leg_ct".format(s))
         if s=='r':
@@ -205,8 +212,8 @@ def madLab_quadBodyRig(rigFile=" "):
         ikFk.ikFkBlend([legJts[0]], [legCt], [globCt[0]])
     
         legIkJts= mc.ls("{0}_leg*".format(s)+"_ik", type='joint')
-        legIkh= ik.simpleIk([legIkJts[0]], [legIkJts[3]], [legCt, kneeCt])#create leg ik's
-        ft.footSetup([legCt], [footCt], [legIkh[0]], [legIkJts[3],legIkJts[4],legIkJts[5]])
+        legIkh= ik.simpleIk([legIkJts[0]], [legIkJts[2]], [legCt, kneeCt])#create leg ik's
+        ft.footSetup([legCt], [footCt], [legIkh[0]], [legIkJts[2],legIkJts[3],legIkJts[4]])
 
     #Add ctrls to correct layers
     ctrLyrCtrls=[tailCtrls[0],rootCtShp,spineCtrlsShp,ctrHipCtShp,headPosCtShp]
@@ -242,4 +249,4 @@ def madLab_quadBodyRig(rigFile=" "):
     return rigFile
     
 if __name__=="__main__":
-    madLab_quadBodyRig(r'spino/spino_02_rig.ma')
+    madLab_quadBodyRig(r'wldFrDrgn/wldFrDrgn_02_rig.ma')
