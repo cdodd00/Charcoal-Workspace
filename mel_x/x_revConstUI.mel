@@ -1,0 +1,175 @@
+/*
+	Script:x_revConstUI
+	Author:Chance B. Dodd created may 2009
+	
+	Description: This script creates a window to set up a connection to a constraint
+						that will use a reverse node to connect to the first parent obj and 
+						connect the controller attribute that is created to the weight of the 
+						constraint
+						
+	To Use: Select the two parent objects then the child and finally the controller
+				to drive which parent the child will follow.
+*/
+
+//creates the point constraint
+global proc x_revPointConst ()
+{
+	string $parent[] = `textScrollList -q -ai objs1TSL`;
+	string $child[] = `textScrollList -q -ai obj2TSL`;
+	string $ctrl = `textFieldButtonGrp -q -tx ctrlTFBG`;
+	string $attr = `textField -q -tx attrTF`;
+	string $pc[]= `pointConstraint -n ($child[0] + "_pntConst") $parent[0] $parent[1] $child[0]`;
+		
+	//check to see if parent attr exists if so just hook up the nodes  
+	if (`attributeExists $attr $ctrl`)
+	{		
+		string $revNode = `createNode reverse -n ($pc[0] + "_rev")`;		
+		connectAttr	-f ($ctrl + "." + $attr) ($revNode + ".ix");
+		connectAttr -f ($revNode + ".ox") ($pc[0] + "." + $parent[0] + "W0");
+		connectAttr -f ($ctrl + "." + $attr) ($pc[0] + "." + $parent[1] + "W1");
+	}
+	else
+	{
+		//create the reverse node and create the needed driver attr
+		addAttr -ln $attr -k 1 -at "enum" -en ($parent[0] + ":" + $parent[1]) $ctrl;
+		
+		string $revNode = `createNode reverse -n ($pc[0] + "_rev")`;
+		connectAttr	-f ($ctrl + "." + $attr) ($revNode + ".ix");
+		connectAttr -f ($revNode + ".ox") ($pc[0] + "." + $parent[0] + "W0");
+		connectAttr -f ($ctrl + "." + $attr) ($pc[0] + "." + $parent[1] + "W1");
+	} 
+	select $ctrl;
+	print ($pc[0] + " created\n");
+}
+
+//creates the orient constraint
+global proc x_revOrientConst ()
+{
+	string $parent[] = `textScrollList -q -ai objs1TSL`;
+	string $child[] = `textScrollList -q -ai obj2TSL`;
+	string $ctrl = `textFieldButtonGrp -q -tx ctrlTFBG`;
+	string $attr = `textField -q -tx attrTF`;
+	string $oc[]= `orientConstraint -n ($child[0] + "_orntConst") $parent[0] $parent[1] $child[0]`;
+		
+	//check to see if parent attr exists if so just hook up the nodes 
+	if (`attributeExists $attr $ctrl`)
+	{		
+		string $revNode = `createNode reverse -n ($oc[0] + "_rev")`;		
+		connectAttr	-f ($ctrl + "." + $attr) ($revNode + ".ix");
+		connectAttr -f ($revNode + ".ox") ($oc[0] + "." + $parent[0] + "W0");
+		connectAttr -f ($ctrl + "." + $attr) ($oc[0] + "." + $parent[1] + "W1");
+	}
+	else
+	{
+		//create the reverse node and create the needed driver attr
+		addAttr -ln $attr -k 1 -at "enum" -en ($parent[0] + ":" + $parent[1]) $ctrl;
+		
+		string $revNode = `createNode reverse -n ($oc[0] + "_rev")`;
+		connectAttr	-f ($ctrl + "." + $attr) ($revNode + ".ix");
+		connectAttr -f ($revNode + ".ox") ($oc[0] + "." + $parent[0] + "W0");
+		connectAttr -f ($ctrl + "." + $attr) ($oc[0] + "." + $parent[1] + "W1");
+	}	
+	select $ctrl;
+	print ($oc[0] + " created\n");
+}
+
+//creates the parent constraint
+global proc x_revParentConst ()
+{
+	string $parent[] = `textScrollList -q -ai objs1TSL`;
+	string $child[] = `textScrollList -q -ai obj2TSL`;
+	string $ctrl = `textFieldButtonGrp -q -tx ctrlTFBG`;
+	string $attr = `textField -q -tx attrTF`;
+	string $parC[]= `parentConstraint -mo -st z -sr x -sr y -n ($child[0] + "_parConst") $parent[0] $parent[1] $child[0]`;
+		
+	//check to see if parent attr exists if so just hook up the nodes 
+	if (`attributeExists $attr $ctrl`)
+	{		
+		string $revNode = `createNode reverse -n ($parC[0] + "_rev")`;		
+		connectAttr	-f ($ctrl + "." + $attr) ($revNode + ".ix");
+		connectAttr -f ($revNode + ".ox") ($parC[0] + "." + $parent[0] + "W0");
+		connectAttr -f ($ctrl + "." + $attr) ($parC[0] + "." + $parent[1] + "W1");
+	}
+	else
+	{
+		//create the reverse node and create the needed driver attr
+		addAttr -ln $attr -k 1 -at "enum" -en ($parent[0] + ":" + $parent[1]) $ctrl;
+		
+		string $revNode = `createNode reverse -n ($parC[0] + "_rev")`;
+		connectAttr	-f ($ctrl + "." + $attr) ($revNode + ".ix");
+		connectAttr -f ($revNode + ".ox") ($parC[0] + "." + $parent[0] + "W0");
+		connectAttr -f ($ctrl + "." + $attr) ($parC[0] + "." + $parent[1] + "W1");
+	}	
+	select $ctrl;
+	print ($parC[0] + " created\n");
+}
+
+
+/* 
+	creates a window showing the parent objs the child object and the controller
+	and attribute of the controller for driving the constraint
+*/
+
+global proc x_revConstUI()
+{
+	string $revUI = "x_revConstUI";
+	if (`window -exists $revUI`)
+		deleteUI $revUI;
+	
+	window -t "Reverse Constraint Creator"
+		-rtf 1
+		-s 1
+		$revUI;
+		
+	//layout
+	columnLayout -adj 1 -cw 300 -cat "both" 1 -cal "center" mainCol;
+	
+		rowColumnLayout -nc 2 -cw 1 150 -cw 2 150 topRow;
+		
+			text " ";
+			text " ";
+			text -align "center" "Parent Objects";
+			text -align "center" "Child Object";
+			textScrollList -nr 2 objs1TSL;
+			textScrollList -nr 2 obj2TSL;
+			button -l "Load Selected" parentBtn;
+			button -l "Load Selected" childBtn;
+		
+		setParent mainCol;
+		
+		text " ";
+		text "Constraint Driver";
+		textFieldButtonGrp -l " " -ad3 1 -bl "Load Sel" -cw3 5 150 70 ctrlTFBG;
+		
+		rowColumnLayout -nc 1 -cal 1 center -cat 1 both 70 -cw 1 300 midRow;
+	
+			text -align "center" "Attribute";
+			textField attrTF;
+			text " ";
+		
+		setParent mainCol;
+		
+		rowColumnLayout -nc 3 botRow;
+		
+			button -l "Point" pointCBtn;
+			button -l "Orient" orientCBtn;
+			button -l "Parent" parCBtn;
+	
+	
+	showWindow $revUI;
+	
+	//control edits
+	string $sel[] = `ls -sl`;
+	
+	textScrollList -e -a $sel[0] -a $sel[1] objs1TSL;
+	textScrollList -e -a $sel[2] obj2TSL;
+	textFieldButtonGrp -e -tx $sel[3] -bc "x_loadObjIntoTFBG ctrlTFBG" ctrlTFBG;
+	button -e -c "x_loadObjsToScrollList objs1TSL" parentBtn;
+	button -e -c "x_loadObjsToScrollList obj2TSL" childBtn;
+	button -e -c "x_revPointConst" pointCBtn;
+	button -e -c "x_revOrientConst" orientCBtn;
+	button -e -c "x_revParentConst" parCBtn;
+}
+
+
+

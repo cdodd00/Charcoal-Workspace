@@ -1,0 +1,397 @@
+/*
+	--x_ikhLib.mel--
+	
+	Create several different kinds of ik handles
+	
+	Chance B. Dodd - 10/16/11
+	
+	Updated 10/10/2013
+		Added creatNoFlipArmIK procedure for arms
+		
+	Updated 11/6/14
+		Redo of createStretchyIK to work with bent legs
+		Now adds "thigh" and "shin" lengths together to get
+		initial distance.
+	
+*/
+
+//create simple ikh setup. Must have control and pole vector control (elbow or knee)
+//select the first and last joints
+global proc simpleIkh(){
+
+	source x_stringLib.mel;
+	//get selected objects
+	string $sel[] = `ls - sl`;
+	
+	string $joints[] = {$sel[0], $sel[1]};
+	string $ctrl = $sel[2];
+	string $pvCt = $sel[3];
+	
+	//get the side of the joint
+	string $side = returnSide($joints[0]);
+	//get name of ctrl to name the ikh
+	string $ctrlName = returnObjName($ctrl);
+	
+	//create the IK handle	
+	string $ikh []= `ikHandle -sol ikRPsolver -sj $joints[0] -ee $joints[1] -n ($side + "_" + $ctrlName + "_ikh")`;
+	//create pv const to $pvCt
+	poleVectorConstraint $pvCt $ikh[0];
+	//parent ikh to $ctrl
+	parent $ikh[0] $ctrl;
+
+}
+
+// createNoFlipIK
+// creates an ik handle that doesn't flip the knee
+////////////////////
+
+global proc createNoFlipIK(string $joints[], string $ctrl)
+{
+	source x_stringLib.mel;
+	
+	//get the side of the joint
+	string $side = returnSide($joints[0]);
+	string $legMD;
+	
+	//====================================================	
+	
+	//create the IK handle	
+	string $legIK []= `ikHandle -sol ikRPsolver -sj $joints[0] -ee $joints[2] -n ($side + "_leg_ikh")`;
+	
+	//rename IK end effector
+	string $tempEff =`ikHandle -q -ee $legIK[0]`;
+	rename $tempEff ($side + "_leg_eff");
+	
+	//set the pole vector direction
+	if ($side == "l")
+	{
+		//set the pole vector X to 1 and the rest to 0	
+		setAttr ($legIK[0] + ".poleVectorX") 1;
+		setAttr ($legIK[0] + ".poleVectorY") 0;
+		setAttr ($legIK[0] + ".poleVectorZ") 0;
+	}
+	else
+	{
+		//if right side set the pole vector X to -1 and the rest to 0	
+		setAttr ($legIK[0] + ".poleVectorX") -1;
+		setAttr ($legIK[0] + ".poleVectorY") 0;
+		setAttr ($legIK[0] + ".poleVectorZ") 0;
+	}
+	
+	//get the x rotation of the start joint and store it in a var to reset the ik twist later	
+	float $hipRot []= `xform -q -os -ro $joints[0]`;
+	
+	//add a Knee twist attr to the legCtrl 	
+	addAttr -ln "kneeTwist" -k 1 -at "double" $ctrl;
+	
+	//create addDoubleLinear node to add the knee twist and the $hipRot values
+	//and input into the ik twist attr	
+	string $add = `createNode addDoubleLinear -n ($legIK[0] + "_add")`;
+	
+	if ($side == "l")
+	{
+		//set input2 on the add node to the inverse of $hipRot	
+		setAttr ($add + ".input2") ($hipRot[0] * -1);
+		//create a multDiv node set it to inverse the kneeTwist so it operates correctly	
+		$legMD = `createNode multiplyDivide -n ($legIK[0] + "_md")`;
+		setAttr ($legMD + ".input2X") -2;
+	}
+	else
+	{
+		//set input2 on the add node to $hipRot	
+		setAttr ($add + ".input2") $hipRot[0];
+		//create a multDiv node connect kneeTwist so it operates correctly
+		$legMD = `createNode multiplyDivide -n ($legIK[0] + "_md")`;
+		setAttr ($legMD + ".input2X") 2;
+	}
+	
+	//connect the knee twist into the multDiv and the multDiv into the add	
+	connectAttr -f ($ctrl + ".kneeTwist") ($legMD + ".input1X");
+	connectAttr -f ($legMD + ".outputX") ($add + ".input1");
+	
+	//connect the add node into the ik twist attr	
+	connectAttr -f ($add + ".output") ($legIK[0] + ".twist");
+	
+	select -cl;
+	
+}
+
+//======================================================
+ 
+// createStretchyIK
+// adds stretchyness ability to an already created ik
+// using the translate x channel of the joint
+////////////////////
+
+global proc createStretchyIK(string $joints[], string $ctrl, string $object)
+{
+	source x_stringLib.mel;
+	source x_relativesLib.mel;
+	
+	//get the side of the joint
+	string $side = returnSide($joints[0]);
+		
+	//get the location of the start and end joints for the dist node locators
+	float $startTrans[] = `xform -q -ws -t $joints[0]`;
+	float $endTrans[] = `xform -q -ws -t $joints[2]`;
+	
+	//create locators
+	for ($i=0;$i<2;$i++)
+	{	
+		string $loc; 
+
+		if ($i==0)//hip or shldr
+		{
+			//create the start locator and parent constrain them to the start joints
+			createNode locator -n ($side + "_" + $object + "Start_distLocShape");
+			$loc = `returnTopParent(($side + "_" + $object + "Start_distLocShape"))`;
+			move -a $startTrans[0] $startTrans[1] $startTrans[2] $loc;
+			rename  $loc ($side + "_" + $object + "Start_distLoc") ;
+			pointConstraint $joints[0] $loc;
+			
+		}
+		else //ankle or wrist
+		{
+			//create the end locator and parent them to the leg ctrl
+			createNode locator -n ($side + "_" + $object + "End_distLocShape");
+			$loc = `returnTopParent(($side + "_" + $object +  "End_distLocShape"))`;
+			move -a $endTrans[0] $endTrans[1] $endTrans[2] $loc;
+			rename  $loc ($side + "_" + $object + "End_distLoc") ;
+			parent $loc $ctrl;
+		}
+	}
+	
+	//create dist node
+	string $tempDist01 = `distanceDimension -sp $startTrans[0] $startTrans[1] $startTrans[2] -ep $endTrans[0] $endTrans[1] $endTrans[2]`;
+	string $dist = `returnTopParent($tempDist01)`;
+	$dist = `rename $dist ($side + "_" + $object + "_dist")`;
+	
+	//create condition node for each section
+	string $cond01 = `shadingNode -asUtility -n ($side + "_" + $object + "Up_cond" ) condition`;
+	setAttr ($cond01 + ".operation") 2;
+	string $cond02 = `shadingNode -asUtility -n ($side + "_" + $object + "Lo_cond") condition`;
+	setAttr ($cond02 + ".operation") 2;
+
+	//create the driver driven keys on the mid and end joints
+	//get the current length and translate x values of joints
+	float $length = `getAttr ($dist + "Shape.distance")`; 
+	float $midX = `getAttr ($joints[1] + ".tx")`;
+	float $endX = `getAttr ($joints[2] + ".tx")`;
+	float $initialLength = abs($midX + $endX);
+	
+	setAttr ($cond01 + ".secondTerm") $initialLength;
+	setAttr ($cond02 + ".secondTerm") $initialLength;
+	setAttr ($cond01 + ".colorIfFalseR") $midX;
+	setAttr ($cond02 + ".colorIfFalseR") $endX;
+	
+	connectAttr -f ($dist + "Shape.distance") ($cond01 + ".firstTerm");
+	connectAttr -f ($dist + "Shape.distance") ($cond02 + ".firstTerm");
+	
+	connectAttr -f ($cond01 + ".outColorR")($joints[1] + ".tx");
+	connectAttr -f ($cond02 + ".outColorR")($joints[2] + ".tx");
+		
+	// default keys
+	setDrivenKeyframe -dv $initialLength -v $midX -cd ($dist + "Shape.distance") ($cond01 + ".colorIfTrueR");
+	setDrivenKeyframe -dv $initialLength -v $endX -cd ($dist + "Shape.distance") ($cond02 + ".colorIfTrueR");
+	// multiply the distance and position on x by 2 to get the stretch keys
+	setDrivenKeyframe -dv ($initialLength * 2) -v ($midX * 2)-cd ($dist + "Shape.distance") ($cond01 + ".colorIfTrueR");
+	setDrivenKeyframe -dv ($initialLength * 2) -v ($endX * 2) -cd ($dist + "Shape.distance") ($cond02 + ".colorIfTrueR");
+	
+	//set the keys to linear as well as infinity
+	selectKey -k ($cond01 + "_colorIfTrueR");
+	keyTangent -e -itt "linear" -ott "linear" ($cond01 + "_colorIfTrueR");
+	setInfinity -poi linear;
+	selectKey -k ($cond02 + "_colorIfTrueR");
+	keyTangent -e -itt "linear" -ott "linear" ($cond02 + "_colorIfTrueR");
+	setInfinity -poi linear;
+	
+	//create the md node and connect the global ctrl to it
+	string $rigScaleDiv = `createNode multiplyDivide -n ($object + "_rigScale_div")`;
+	setAttr ($rigScaleDiv + ".operation") 2;
+	connectAttr -f "c_global_ct.sy" ($rigScaleDiv + ".i2x");
+	connectAttr -f "c_global_ct.sy" ($rigScaleDiv + ".i2y");
+	
+	if($side == "l")
+	{
+		connectAttr -f ($dist + "Shape.distance") ($rigScaleDiv + ".i1x");
+		//connect md to driver driven keys
+		connectAttr -f ($rigScaleDiv + ".ox") ($cond01 + "_colorIfTrueR.input");
+		connectAttr -f ($rigScaleDiv + ".ox") ($cond02 + "_colorIfTrueR.input");
+		
+	}
+	else
+	{
+		//hook up the right side
+		connectAttr -f ($dist + "Shape.distance") ($rigScaleDiv + ".i1y");
+		connectAttr -f ($rigScaleDiv + ".oy") ($cond01 + "_colorIfTrueR.input");
+		connectAttr -f ($rigScaleDiv + ".oy") ($cond02 + "_colorIfTrueR.input");
+	}
+	
+	//setup the blend
+	addAttr -ln "stretch" -at double -k 1 -min 0 -max 1 -dv 1 $ctrl;
+
+	
+	//create blend colors node and connect the DD keys to it
+	string $blend = `createNode blendColors -n ($side + "_" + $object + "_stretch_blnd")`;
+	connectAttr -f ($cond01 + "_colorIfTrueR.output") ($blend + ".color1R");
+	connectAttr -f ($cond02 + "_colorIfTrueR.output") ($blend + ".color1G");
+	setAttr ($blend + ".color2R") $midX;
+	setAttr ($blend + ".color2G") $endX;
+	
+	//connect the blend to the joints
+	connectAttr -f ($blend + ".outputR") ($cond01 + ".colorIfTrueR");
+	connectAttr -f ($blend + ".outputG") ($cond02 + ".colorIfTrueR");
+	//connect the stretch attr
+	connectAttr -f ($ctrl + ".stretch") ($blend + ".blender");
+	
+	//================================================
+	//clean up creation
+	if (`objExists ("n_" + $object + "Dist_gp")`)
+	{
+		parent ($side + "_" + $object + "_dist") ("n_" + $object + "Dist_gp");
+	}
+	else
+	{
+		group -em -n ("n_" + $object + "Dist_gp");
+		parent ($side + "_" + $object + "_dist") ("n_" + $object + "Dist_gp");
+	}
+	
+	parent ($side + "_" + $object + "Start_distLoc") ("n_" + $object + "Dist_gp");
+	//hide the leg dist objects
+	setAttr ("n_" + $object + "Dist_gp.v") 0;
+	setAttr ($side + "_" + $object + "End_distLoc.v") 0;
+	
+}
+// createStretchySplineIK
+// creates a stretchy spline ik using the curves arc length
+// and the tranlate x of the joints
+// based on solsona's script
+///////////////
+
+global proc createStretchySplineIK(string $curve, string $axis, string $joints[])
+{
+	//get the shape node of the curve
+	string $temp[] = `listRelatives -f -s $curve`;
+	string $crvShape = $temp[0];
+	
+	//create a crv info on the curve
+	string $tempInfo = `arclen -ch 1 $curve`;
+	string $crvInfo = `rename $tempInfo ($curve + "Info")`;
+	
+	//get length of curve
+	float $arcLen = `getAttr ($crvInfo + ".arcLength")`;
+	
+	//create md node to divide current length over the initial length
+	string $div = `createNode multiplyDivide -n ($curve + "_scale_div")`;
+	//set operation to divide
+	setAttr ($div + ".operation") 2;
+	
+	//connect the arclength into input 1x
+	connectAttr ($crvInfo + ".arcLength") ($div + ".i1x");
+	//set input 2x to original length
+	setAttr ($div + ".i2x") $arcLen;
+	
+	//create md's for every joint and connect it to the given axis
+	for ($joint in $joints)
+	{
+		//get current length of joint
+		float $length = `getAttr ($joint + "." + $axis)`;
+		
+		//create the md's
+		string $jointMD = `createNode multiplyDivide -n ($joint + "_scale_md")`;
+		
+		//connect curve md to joint md
+		connectAttr ($div + ".ox") ($jointMD + ".i1x");
+		
+		//set joint md input 2 x to default length
+		setAttr ($jointMD + ".i2x") $length;
+		
+		//connect the joint md in to the joint's given axis
+		connectAttr -f ($jointMD + ".ox") ($joint + "." + $axis);
+	}
+
+}
+
+// createNoFlipArmIK
+// creates an ik handle that doesn't the elbow
+////////////////////
+
+global proc createNoFlipArmIK(string $joints[], string $ctrl)
+{
+	source x_stringLib.mel;
+	
+	//get the side of the joint
+	string $side = returnSide($joints[0]);
+	string $armMD;
+	
+	//====================================================	
+	
+	//create the IK handle	
+	string $armIK []= `ikHandle -sol ikRPsolver -sj $joints[0] -ee $joints[2] -n ($side + "_arm_ikh")`;
+	
+	//rename IK end effector
+	string $tempEff =`ikHandle -q -ee $armIK[0]`;
+	rename $tempEff ($side + "_arm_eff");
+	
+	//set the pole vector direction
+	if ($side == "l")
+	{
+		//set the pole vector Z to -1 and the rest to 0	
+		setAttr ($armIK[0] + ".poleVectorX") 0;
+		setAttr ($armIK[0] + ".poleVectorY") 0;
+		setAttr ($armIK[0] + ".poleVectorZ") -1;
+	}
+	else
+	{
+		//if right side set the pole vector Z to 1 and the rest to 0	
+		setAttr ($armIK[0] + ".poleVectorX") 0;
+		setAttr ($armIK[0] + ".poleVectorY") 0;
+		setAttr ($armIK[0] + ".poleVectorZ") 1;
+	}
+	
+	//get the x rotation of the start joint and store it in a var to reset the ik twist later	
+	float $shldrRot []= `xform -q -os -ro $joints[0]`;
+	
+	//add a elbow twist attr to the armCtrl 	
+	addAttr -ln "elbowTwist" -k 1 -at "double" $ctrl;
+	
+	//create addDoubleLinear node to add the elbow twist and the $shldrRot values
+	//and input into the ik twist attr	
+	string $add = `createNode addDoubleLinear -n ($armIK[0] + "_add")`;
+	
+	if ($side == "l")
+	{
+		//set input2 on the add node to the inverse of $shldrRot	
+		setAttr ($add + ".input2") ($shldrRot[0] * -1);
+		//create a multDiv node set it to inverse the elbowTwist so it operates correctly	
+		$armMD = `createNode multiplyDivide -n ($armIK[0] + "_md")`;
+		setAttr ($armMD + ".input2X") -2;
+	}
+	else
+	{
+		//set input2 on the add node to $shldrRot	
+		setAttr ($add + ".input2") $shldrRot[0];
+		//create a multDiv node connect elbowTwist so it operates correctly
+		$armMD = `createNode multiplyDivide -n ($armIK[0] + "_md")`;
+		setAttr ($armMD + ".input2X") 2;
+	}
+	
+	//connect the elbow twist into the multDiv and the multDiv into the add	
+	connectAttr -f ($ctrl + ".elbowTwist") ($armMD + ".input1X");
+	connectAttr -f ($armMD + ".outputX") ($add + ".input1");
+	
+	//connect the add node into the ik twist attr	
+	connectAttr -f ($add + ".output") ($armIK[0] + ".twist");
+	
+	select -cl;
+	
+}
+
+//======================================================
+
+
+
+
+
+
+

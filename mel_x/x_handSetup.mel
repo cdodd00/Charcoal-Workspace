@@ -1,0 +1,702 @@
+// buildHandSetup
+// create the control and setup the hand
+// fk ctrls + driver drivens for overall hand and individual fingers
+
+global proc x_handSetup(string $joints[])
+{
+	source x_controllerLib.mel;
+	source x_stringLib.mel;
+	source x_relativesLib.mel;
+	source x_alignLib.mel;
+	
+	string $side = returnSide($joints[0]);
+	
+	//create the hand ctrl
+	string $handCt = nullCtrlZeroPosRot ($joints[0], ($side + "_hand"));
+	string $thumbCt = ($side + "_thumb_ct");
+	string $indexCt = ($side + "_indexFing_ct");
+	string $midCt = ($side + "_midFing_ct");
+	string $ringCt = ($side + "_ringFing_ct");
+	string $pinkyCt = ($side + "_pinkyFing_ct");
+	string $fingersCt[] = { $thumbCt, $indexCt, $midCt, $ringCt, $pinkyCt};
+	string $thumbJts[] = {($side + "_thumb01_jt"),($side + "_thumb02_jt"),($side + "_thumb03_jt")};
+	string $indexJts[] = {($side + "_indxFing01_jt"),($side + "_indxFing02_jt"),($side + "_indxFing03_jt")};
+	string $midJts[] = {($side + "_midFing01_jt"),($side + "_midFing02_jt"),($side + "_midFing03_jt")};
+	string $ringJts[] = {($side + "_ringFing01_jt"),($side + "_ringFing02_jt"),($side + "_ringFing03_jt")};
+	string $pinkyJts[] = {($side + "_pnkyFing01_jt"),($side + "_pnkyFing02_jt"),($side + "_pnkyFing03_jt")};
+	
+	//add the custom attrs
+	//hand
+	addAttr -ln "handCtrls" -at enum -en "------" $handCt;
+	setAttr -cb 1 -l 1 ($handCt + ".handCtrls");
+	addAttr -ln "curl" -at double -k 1 -min -10 -max 10 $handCt;
+	addAttr -ln "thumbCurl" -at double -k 1 -min -10 -max 10 $handCt;
+	addAttr -ln "scrunch" -at double -k 1 -min -10 -max 10 $handCt;
+	addAttr -ln "thumbScrunch" -at double -k 1 -min -10 -max 10 $handCt;
+	addAttr -ln "relax" -at double -k 1 -min -10 -max 10 $handCt;
+	addAttr -ln "cup" -at double -k 1 -min 0 -max 10 $handCt;
+	addAttr -ln "spread" -at double -k 1 -min -10 -max 10 $handCt;
+	addAttr -ln "midSpread" -at double -k 1 -min -10 -max 10 $handCt;
+	addAttr -ln "thumbSpread" -at double -k 1 -min -10 -max 10 $handCt;
+	
+	//fingers
+	for ($i=0;$i<`size ($fingersCt)`;$i++)
+	{
+		//thumb
+		if ($i==0)
+		{
+			addAttr -ln "fingerCtrls" -at enum -en "------" $fingersCt[$i];
+			setAttr -cb 1 -l 1 ( $fingersCt[$i] + ".fingerCtrls");
+			addAttr -ln "curl" -at double -k 1 -min -10 -max 10 $fingersCt[$i];
+			addAttr -ln "scrunch" -at double -k 1 -min -10 -max 10 $fingersCt[$i];
+			addAttr -ln "spread" -at double -k 1 -min -10 -max 10 $fingersCt[$i];
+			addAttr -ln "orbit" -at double -k 1 -min -10 -max 10 $fingersCt[$i];
+			addAttr -ln "twist" -at double -k 1 -min -10 -max 10 $fingersCt[$i];
+			addAttr -ln "bend1" -at double -k 1 -min -10 -max 10 $fingersCt[$i];
+			addAttr -ln "bend2" -at double -k 1 -min -10 -max 10 $fingersCt[$i];
+			//addAttr -ln "bend3" -at double -k 1 -min -10 -max 10 $fingersCt[$i];
+			//addAttr -ln "length" -at double -k 1 -min 0 -max 10 -dv 1 $fingersCt[$i];
+		}
+		else
+		{
+			addAttr -ln "fingerCtrls" -at enum -en "------" $fingersCt[$i];
+			setAttr -cb 1 -l 1 ( $fingersCt[$i] + ".fingerCtrls");
+			addAttr -ln "curl" -at double -k 1 -min -10 -max 10 $fingersCt[$i];
+			addAttr -ln "scrunch" -at double -k 1 -min -10 -max 10 $fingersCt[$i];
+			addAttr -ln "spread" -at double -k 1 -min -10 -max 10 $fingersCt[$i];
+			addAttr -ln "twist" -at double -k 1 -min -10 -max 10 $fingersCt[$i];
+			addAttr -ln "bend1" -at double -k 1 -min -10 -max 10 $fingersCt[$i];
+			addAttr -ln "bend2" -at double -k 1 -min -10 -max 10 $fingersCt[$i];
+			addAttr -ln "bend3" -at double -k 1 -min -10 -max 10 $fingersCt[$i];
+			//addAttr -ln "length" -at double -k 1 -min 0 -max 10 -dv 1 $fingersCt[$i];
+		}
+		
+	}
+	//driver drivens
+	//hand curl
+	//index
+	setDrivenKeyframe -dv 0 -v 0 -cd ($handCt + ".curl") ($indexJts[0] + ".rz");
+	setDrivenKeyframe -dv 10 -v -90 -cd ($handCt + ".curl") ($indexJts[0] + ".rz");
+	setDrivenKeyframe -dv -10 -v 50	-cd ($handCt + ".curl") ($indexJts[0] + ".rz");
+	
+	setDrivenKeyframe -dv 0 -v 0 -cd ($handCt + ".curl") ($indexJts[1] + ".rz");
+	setDrivenKeyframe -dv 10 -v -110 -cd ($handCt + ".curl") ($indexJts[1] + ".rz");
+	setDrivenKeyframe -dv -10 -v 23	-cd ($handCt + ".curl") ($indexJts[1] + ".rz");
+	
+	setDrivenKeyframe -dv 0 -v 0 -cd ($handCt + ".curl") ($indexJts[2] + ".rz");
+	setDrivenKeyframe -dv 10 -v -70 -cd ($handCt + ".curl") ($indexJts[2] + ".rz");
+	setDrivenKeyframe -dv -10 -v 25	-cd ($handCt + ".curl") ($indexJts[2] + ".rz");
+	
+	//mid
+	setDrivenKeyframe -dv 0 -v 0 -cd ($handCt + ".curl") ($midJts[0] + ".rz");
+	setDrivenKeyframe -dv 10 -v -80 -cd ($handCt + ".curl") ($midJts[0] + ".rz");
+	setDrivenKeyframe -dv -10 -v 50	-cd ($handCt + ".curl") ($midJts[0] + ".rz");
+	
+	setDrivenKeyframe -dv 0 -v 0 -cd ($handCt + ".curl") ($midJts[1] + ".rz");
+	setDrivenKeyframe -dv 10 -v -110 -cd ($handCt + ".curl") ($midJts[1] + ".rz");
+	setDrivenKeyframe -dv -10 -v 23	-cd ($handCt + ".curl") ($midJts[1] + ".rz");
+	
+	setDrivenKeyframe -dv 0 -v 0 -cd ($handCt + ".curl") ($midJts[2] + ".rz");
+	setDrivenKeyframe -dv 10 -v -70 -cd ($handCt + ".curl") ($midJts[2] + ".rz");
+	setDrivenKeyframe -dv -10 -v 25	-cd ($handCt + ".curl") ($midJts[2] + ".rz");
+	
+	//ring
+	setDrivenKeyframe -dv 0 -v 0 -cd ($handCt + ".curl") ($ringJts[0] + ".rz");
+	setDrivenKeyframe -dv 10 -v -90 -cd ($handCt + ".curl") ($ringJts[0] + ".rz");
+	setDrivenKeyframe -dv -10 -v 50	-cd ($handCt + ".curl") ($ringJts[0] + ".rz");
+	
+	setDrivenKeyframe -dv 0 -v 0 -cd ($handCt + ".curl") ($ringJts[1] + ".rz");
+	setDrivenKeyframe -dv 10 -v -110 -cd ($handCt + ".curl") ($ringJts[1] + ".rz");
+	setDrivenKeyframe -dv -10 -v 23	-cd ($handCt + ".curl") ($ringJts[1] + ".rz");
+	
+	setDrivenKeyframe -dv 0 -v 0 -cd ($handCt + ".curl") ($ringJts[2] + ".rz");
+	setDrivenKeyframe -dv 10 -v -70 -cd ($handCt + ".curl") ($ringJts[2] + ".rz");
+	setDrivenKeyframe -dv -10 -v 25	-cd ($handCt + ".curl") ($ringJts[2] + ".rz");
+		
+	//pinky
+	setDrivenKeyframe -dv 0 -v 0 -cd ($handCt + ".curl") ($pinkyJts[0] + ".rz");
+	setDrivenKeyframe -dv 10 -v -90 -cd ($handCt + ".curl") ($pinkyJts[0] + ".rz");
+	setDrivenKeyframe -dv -10 -v 50	-cd ($handCt + ".curl") ($pinkyJts[0] + ".rz");
+	
+	setDrivenKeyframe -dv 0 -v 0 -cd ($handCt + ".curl") ($pinkyJts[1] + ".rz");
+	setDrivenKeyframe -dv 10 -v -110 -cd ($handCt + ".curl") ($pinkyJts[1] + ".rz");
+	setDrivenKeyframe -dv -10 -v 23	-cd ($handCt + ".curl") ($pinkyJts[1] + ".rz");
+	
+	setDrivenKeyframe -dv 0 -v 0 -cd ($handCt + ".curl") ($pinkyJts[2] + ".rz");
+	setDrivenKeyframe -dv 10 -v -70 -cd ($handCt + ".curl") ($pinkyJts[2] + ".rz");
+	setDrivenKeyframe -dv -10 -v 25	-cd ($handCt + ".curl") ($pinkyJts[2] + ".rz");
+	
+	//hand thumb curl
+	setDrivenKeyframe -dv 0 -v 0 -cd ($handCt + ".thumbCurl") ($thumbJts[0] + ".rz");
+	setDrivenKeyframe -dv 10 -v -50 -cd ($handCt + ".thumbCurl") ($thumbJts[0] + ".rz");
+	setDrivenKeyframe -dv -10 -v 20	-cd ($handCt + ".thumbCurl") ($thumbJts[0] + ".rz");
+	
+	setDrivenKeyframe -dv 0 -v 0 -cd ($handCt + ".thumbCurl") ($thumbJts[1] + ".rz");
+	setDrivenKeyframe -dv 10 -v -90 -cd ($handCt + ".thumbCurl") ($thumbJts[1] + ".rz");
+	setDrivenKeyframe -dv -10 -v 40	-cd ($handCt + ".thumbCurl") ($thumbJts[1] + ".rz");
+
+	//hand scrunch
+	//index
+	setDrivenKeyframe -dv 0 -v 0 -cd ($handCt + ".scrunch") ($indexJts[0] + ".rz");
+	setDrivenKeyframe -dv 10 -v 28 -cd ($handCt + ".scrunch") ($indexJts[0] + ".rz");
+	setDrivenKeyframe -dv -10 -v -5	-cd ($handCt + ".scrunch") ($indexJts[0] + ".rz");
+	
+	setDrivenKeyframe -dv 0 -v 0 -cd ($handCt + ".scrunch") ($indexJts[1] + ".rz");
+	setDrivenKeyframe -dv 10 -v -109 -cd ($handCt + ".scrunch") ($indexJts[1] + ".rz");
+	setDrivenKeyframe -dv -10 -v 12	-cd ($handCt + ".scrunch") ($indexJts[1] + ".rz");
+	
+	setDrivenKeyframe -dv 0 -v 0 -cd ($handCt + ".scrunch") ($indexJts[2] + ".rz");
+	setDrivenKeyframe -dv 10 -v -88 -cd ($handCt + ".scrunch") ($indexJts[2] + ".rz");
+	setDrivenKeyframe -dv -10 -v 15	-cd ($handCt + ".scrunch") ($indexJts[2] + ".rz"); 
+	//mid
+	setDrivenKeyframe -dv 0 -v 0 -cd ($handCt + ".scrunch") ($midJts[0] + ".rz");
+	setDrivenKeyframe -dv 10 -v 28 -cd ($handCt + ".scrunch") ($midJts[0] + ".rz");
+	setDrivenKeyframe -dv -10 -v -5	-cd ($handCt + ".scrunch") ($midJts[0] + ".rz");
+	
+	setDrivenKeyframe -dv 0 -v 0 -cd ($handCt + ".scrunch") ($midJts[1] + ".rz");
+	setDrivenKeyframe -dv 10 -v -109 -cd ($handCt + ".scrunch") ($midJts[1] + ".rz");
+	setDrivenKeyframe -dv -10 -v 12	-cd ($handCt + ".scrunch") ($midJts[1] + ".rz");
+	
+	setDrivenKeyframe -dv 0 -v 0 -cd ($handCt + ".scrunch") ($midJts[2] + ".rz");
+	setDrivenKeyframe -dv 10 -v -88 -cd ($handCt + ".scrunch") ($midJts[2] + ".rz");
+	setDrivenKeyframe -dv -10 -v 15	-cd ($handCt + ".scrunch") ($midJts[2] + ".rz");
+	//ring
+	setDrivenKeyframe -dv 0 -v 0 -cd ($handCt + ".scrunch") ($ringJts[0] + ".rz");
+	setDrivenKeyframe -dv 10 -v 28 -cd ($handCt + ".scrunch") ($ringJts[0] + ".rz");
+	setDrivenKeyframe -dv -10 -v -5	-cd ($handCt + ".scrunch") ($ringJts[0] + ".rz");
+	
+	setDrivenKeyframe -dv 0 -v 0 -cd ($handCt + ".scrunch") ($ringJts[1] + ".rz");
+	setDrivenKeyframe -dv 10 -v -111 -cd ($handCt + ".scrunch") ($ringJts[1] + ".rz");
+	setDrivenKeyframe -dv -10 -v 12	-cd ($handCt + ".scrunch") ($ringJts[1] + ".rz");
+	
+	setDrivenKeyframe -dv 0 -v 0 -cd ($handCt + ".scrunch") ($ringJts[2] + ".rz");
+	setDrivenKeyframe -dv 10 -v -88 -cd ($handCt + ".scrunch") ($ringJts[2] + ".rz");
+	setDrivenKeyframe -dv -10 -v 15	-cd ($handCt + ".scrunch") ($ringJts[2] + ".rz");
+	//pinky
+	setDrivenKeyframe -dv 0 -v 0 -cd ($handCt + ".scrunch") ($pinkyJts[0] + ".rz");
+	setDrivenKeyframe -dv 10 -v 22 -cd ($handCt + ".scrunch") ($pinkyJts[0] + ".rz");
+	setDrivenKeyframe -dv -10 -v -5	-cd ($handCt + ".scrunch") ($pinkyJts[0] + ".rz");
+	
+	setDrivenKeyframe -dv 0 -v 0 -cd ($handCt + ".scrunch") ($pinkyJts[1] + ".rz");
+	setDrivenKeyframe -dv 10 -v -110 -cd ($handCt + ".scrunch") ($pinkyJts[1] + ".rz");
+	setDrivenKeyframe -dv -10 -v 12	-cd ($handCt + ".scrunch") ($pinkyJts[1] + ".rz");
+	
+	setDrivenKeyframe -dv 0 -v 0 -cd ($handCt + ".scrunch") ($pinkyJts[2] + ".rz");
+	setDrivenKeyframe -dv 10 -v -95 -cd ($handCt + ".scrunch") ($pinkyJts[2] + ".rz");
+	setDrivenKeyframe -dv -10 -v 15	-cd ($handCt + ".scrunch") ($pinkyJts[2] + ".rz");
+	
+	//hand thumb scrunch
+	setDrivenKeyframe -dv 0 -v 0 -cd ($handCt + ".thumbScrunch") ($thumbJts[0] + ".rz");
+	setDrivenKeyframe -dv 10 -v 11 -cd ($handCt + ".thumbScrunch") ($thumbJts[0] + ".rz");
+	setDrivenKeyframe -dv -10 -v -18 -cd ($handCt + ".thumbScrunch") ($thumbJts[0] + ".rz");
+	
+	setDrivenKeyframe -dv 0 -v 0 -cd ($handCt + ".thumbScrunch") ($thumbJts[1] + ".rz");
+	setDrivenKeyframe -dv 10 -v -60 -cd ($handCt + ".thumbScrunch") ($thumbJts[1] + ".rz");
+	setDrivenKeyframe -dv -10 -v 30	-cd ($handCt + ".thumbScrunch") ($thumbJts[1] + ".rz");
+
+	//hand relax
+	//index
+	setDrivenKeyframe -dv 0 -v 0 -cd ($handCt + ".relax") ($indexJts[0] + ".rz");
+	setDrivenKeyframe -dv 10 -v -21 -cd ($handCt + ".relax") ($indexJts[0] + ".rz");
+	setDrivenKeyframe -dv -10 -v -19 -cd ($handCt + ".relax") ($indexJts[0] + ".rz");
+	
+	setDrivenKeyframe -dv 0 -v 0 -cd ($handCt + ".relax") ($indexJts[1] + ".rz");
+	setDrivenKeyframe -dv 10 -v -32 -cd ($handCt + ".relax") ($indexJts[1] + ".rz");
+	setDrivenKeyframe -dv -10 -v -18 -cd ($handCt + ".relax") ($indexJts[1] + ".rz");
+	
+	setDrivenKeyframe -dv 0 -v 0 -cd ($handCt + ".relax") ($indexJts[2] + ".rz");
+	setDrivenKeyframe -dv 10 -v -20 -cd ($handCt + ".relax") ($indexJts[2] + ".rz");
+	setDrivenKeyframe -dv -10 -v -26 -cd ($handCt + ".relax") ($indexJts[2] + ".rz");
+	//mid
+	setDrivenKeyframe -dv 0 -v 0 -cd ($handCt + ".relax") ($midJts[0] + ".rz");
+	setDrivenKeyframe -dv 10 -v -23 -cd ($handCt + ".relax") ($midJts[0] + ".rz");
+	setDrivenKeyframe -dv -10 -v -15 -cd ($handCt + ".relax") ($midJts[0] + ".rz");
+	
+	setDrivenKeyframe -dv 0 -v 0 -cd ($handCt + ".relax") ($midJts[1] + ".rz");
+	setDrivenKeyframe -dv 10 -v -44 -cd ($handCt + ".relax") ($midJts[1] + ".rz");
+	setDrivenKeyframe -dv -10 -v -10 -cd ($handCt + ".relax") ($midJts[1] + ".rz");
+	
+	setDrivenKeyframe -dv 0 -v 0 -cd ($handCt + ".relax") ($midJts[2] + ".rz");
+	setDrivenKeyframe -dv 10 -v -22 -cd ($handCt + ".relax") ($midJts[2] + ".rz");
+	setDrivenKeyframe -dv -10 -v -24 -cd ($handCt + ".relax") ($midJts[2] + ".rz");
+	//ring
+	setDrivenKeyframe -dv 0 -v 0 -cd ($handCt + ".relax") ($ringJts[0] + ".rz");
+	setDrivenKeyframe -dv 10 -v -24 -cd ($handCt + ".relax") ($ringJts[0] + ".rz");
+	setDrivenKeyframe -dv -10 -v -5	-cd ($handCt + ".relax") ($ringJts[0] + ".rz");
+	
+	setDrivenKeyframe -dv 0 -v 0 -cd ($handCt + ".relax") ($ringJts[1] + ".rz");
+	setDrivenKeyframe -dv 10 -v -45 -cd ($handCt + ".relax") ($ringJts[1] + ".rz");
+	setDrivenKeyframe -dv -10 -v -15 -cd ($handCt + ".relax") ($ringJts[1] + ".rz");
+	
+	setDrivenKeyframe -dv 0 -v 0 -cd ($handCt + ".relax") ($ringJts[2] + ".rz");
+	setDrivenKeyframe -dv 10 -v -42 -cd ($handCt + ".relax") ($ringJts[2] + ".rz");
+	setDrivenKeyframe -dv -10 -v -20 -cd ($handCt + ".relax") ($ringJts[2] + ".rz");
+	//pinky
+	setDrivenKeyframe -dv 0 -v 0 -cd ($handCt + ".relax") ($pinkyJts[0] + ".rz");
+	setDrivenKeyframe -dv 10 -v -25 -cd ($handCt + ".relax") ($pinkyJts[0] + ".rz");
+	setDrivenKeyframe -dv -10 -v -5	-cd ($handCt + ".relax") ($pinkyJts[0] + ".rz");
+	
+	setDrivenKeyframe -dv 0 -v 0 -cd ($handCt + ".relax") ($pinkyJts[1] + ".rz");
+	setDrivenKeyframe -dv 10 -v -52 -cd ($handCt + ".relax") ($pinkyJts[1] + ".rz");
+	setDrivenKeyframe -dv -10 -v -10 -cd ($handCt + ".relax") ($pinkyJts[1] + ".rz");
+	
+	setDrivenKeyframe -dv 0 -v 0 -cd ($handCt + ".relax") ($pinkyJts[2] + ".rz");
+	setDrivenKeyframe -dv 10 -v -40 -cd ($handCt + ".relax") ($pinkyJts[2] + ".rz");
+	setDrivenKeyframe -dv -10 -v -8 -cd ($handCt + ".relax") ($pinkyJts[2] + ".rz");
+	//thumb
+	setDrivenKeyframe -dv 0 -v 0 -cd ($handCt + ".relax") ($thumbJts[0] + ".rz");
+	setDrivenKeyframe -dv 10 -v -30 -cd ($handCt + ".relax") ($thumbJts[0] + ".rz");
+	setDrivenKeyframe -dv -10 -v -13 -cd ($handCt + ".relax") ($thumbJts[0] + ".rz");
+	
+	setDrivenKeyframe -dv 0 -v 0 -cd ($handCt + ".relax") ($thumbJts[1] + ".rz");
+	setDrivenKeyframe -dv 10 -v -40 -cd ($handCt + ".relax") ($thumbJts[1] + ".rz");
+	setDrivenKeyframe -dv -10 -v -26 -cd ($handCt + ".relax") ($thumbJts[1] + ".rz");
+
+	//hand cup
+	//index
+	setDrivenKeyframe -dv 0 -v 0 -cd ($handCt + ".cup") ($indexJts[0] + ".rz");
+	setDrivenKeyframe -dv 10 -v -23 -cd ($handCt + ".cup") ($indexJts[0] + ".rz");
+	
+	setDrivenKeyframe -dv 0 -v 0 -cd ($handCt + ".cup") ($indexJts[1] + ".rz");
+	setDrivenKeyframe -dv 10 -v -8 -cd ($handCt + ".cup") ($indexJts[1] + ".rz");
+	
+	setDrivenKeyframe -dv 0 -v 0 -cd ($handCt + ".cup") ($indexJts[2] + ".rz");
+	setDrivenKeyframe -dv 10 -v -8 -cd ($handCt + ".cup") ($indexJts[2] + ".rz");
+	//mid
+	setDrivenKeyframe -dv 0 -v 0 -cd ($handCt + ".cup") ($midJts[0] + ".rz");
+	setDrivenKeyframe -dv 10 -v -10 -cd ($handCt + ".cup") ($midJts[0] + ".rz");
+	
+	setDrivenKeyframe -dv 0 -v 0 -cd ($handCt + ".cup") ($midJts[1] + ".rz");
+	setDrivenKeyframe -dv 10 -v -20 -cd ($handCt + ".cup") ($midJts[1] + ".rz");
+	
+	setDrivenKeyframe -dv 0 -v 0 -cd ($handCt + ".cup") ($midJts[2] + ".rz");
+	setDrivenKeyframe -dv 10 -v -10 -cd ($handCt + ".cup") ($midJts[2] + ".rz");
+	//ring
+	setDrivenKeyframe -dv 0 -v 0 -cd ($handCt + ".cup") ($ringJts[0] + ".rz");
+	setDrivenKeyframe -dv 10 -v -13.5 -cd ($handCt + ".cup") ($ringJts[0] + ".rz");
+	
+	setDrivenKeyframe -dv 0 -v 0 -cd ($handCt + ".cup") ($ringJts[1] + ".rz");
+	setDrivenKeyframe -dv 10 -v -44 -cd ($handCt + ".cup") ($ringJts[1] + ".rz");
+	
+	setDrivenKeyframe -dv 0 -v 0 -cd ($handCt + ".cup") ($ringJts[2] + ".rz");
+	setDrivenKeyframe -dv 10 -v -23 -cd ($handCt + ".cup") ($ringJts[2] + ".rz");
+	//pinky
+	setDrivenKeyframe -dv 0 -v 0 -cd ($handCt + ".cup") ($pinkyJts[0] + ".rz");
+	setDrivenKeyframe -dv 10 -v -57 -cd ($handCt + ".cup") ($pinkyJts[0] + ".rz");
+	setDrivenKeyframe -dv 0 -v 0 -cd ($handCt + ".cup") ($pinkyJts[0] + ".rx");
+	setDrivenKeyframe -dv 10 -v -50 -cd ($handCt + ".cup") ($pinkyJts[0] + ".rx");
+
+	setDrivenKeyframe -dv 0 -v 0 -cd ($handCt + ".cup") ($pinkyJts[1] + ".rz");
+	setDrivenKeyframe -dv 10 -v -68 -cd ($handCt + ".cup") ($pinkyJts[1] + ".rz");
+	
+	setDrivenKeyframe -dv 0 -v 0 -cd ($handCt + ".cup") ($pinkyJts[2] + ".rz");
+	setDrivenKeyframe -dv 10 -v -21 -cd ($handCt + ".cup") ($pinkyJts[2] + ".rz");
+	//thumb
+	setDrivenKeyframe -dv 0 -v 0 -cd ($handCt + ".cup") ($thumbJts[0] + ".rz");
+	setDrivenKeyframe -dv 10 -v -71 -cd ($handCt + ".cup") ($thumbJts[0] + ".rz");
+	setDrivenKeyframe -dv 0 -v 0 -cd ($handCt + ".cup") ($thumbJts[0] + ".rx");
+	setDrivenKeyframe -dv 10 -v 68 -cd ($handCt + ".cup") ($thumbJts[0] + ".rx");
+
+	setDrivenKeyframe -dv 0 -v 0 -cd ($handCt + ".cup") ($thumbJts[1] + ".rz");
+	setDrivenKeyframe -dv 10 -v -60 -cd ($handCt + ".cup") ($thumbJts[1] + ".rz");
+
+	//rename anim curves
+	for ($jnt=0;$jnt<3;++$jnt)
+	{
+		string $indexName = returnObjName ($indexJts[$jnt]);
+		string $midName = returnObjName ($midJts[$jnt]);
+		string $ringName = returnObjName ($ringJts[$jnt]);
+		string $pinkyName = returnObjName ($pinkyJts[$jnt]);
+				
+		string $indexBlndWghts[] = `listConnections -t blendWeighted -d 0 -s 1 -scn 1 $indexJts[$jnt]`;
+		string $midBlndWghts[] = `listConnections -t blendWeighted -d 0 -s 1 -scn 1 $midJts[$jnt]`;
+		string $ringBlndWghts[] = `listConnections -t blendWeighted -d 0 -s 1 -scn 1 $ringJts[$jnt]`;
+		string $pinkyBlndWghts[] = `listConnections -t blendWeighted -d 0 -s 1 -scn 1 $pinkyJts[$jnt]`;
+		
+		string $indexAnimCrvs[] = `listConnections -t animCurve -d 0 -s 1 -scn 1 $indexBlndWghts[0]`;
+		string $midAnimCrvs[] = `listConnections -t animCurve -d 0 -s 1 -scn 1 $midBlndWghts[0]`;
+		string $ringAnimCrvs[] = `listConnections -t animCurve -d 0 -s 1 -scn 1 $ringBlndWghts[0]`;
+		string $pinkyAnimCrvs[] = `listConnections -t animCurve -d 0 -s 1 -scn 1 $pinkyBlndWghts[0]`;
+	
+		$indexAnimCrvs[0] = `rename $indexAnimCrvs[0] ($side + "_" + $indexName + "Curl_anim")`;
+		$indexAnimCrvs[1] = `rename $indexAnimCrvs[1] ($side + "_" + $indexName + "Scrnch_anim")`;
+		$indexAnimCrvs[2] = `rename $indexAnimCrvs[2] ($side + "_" + $indexName + "Relax_anim")`;
+		$indexAnimCrvs[3] = `rename $indexAnimCrvs[3] ($side + "_" + $indexName + "Cup_anim")`;
+		
+		$midAnimCrvs[0] = `rename $midAnimCrvs[0] ($side + "_" + $midName + "Curl_anim")`;
+		$midAnimCrvs[1] = `rename $midAnimCrvs[1] ($side + "_" + $midName + "Curl_anim")`;
+		$midAnimCrvs[2] = `rename $midAnimCrvs[2] ($side + "_" + $midName + "Curl_anim")`;
+		$midAnimCrvs[3] = `rename $midAnimCrvs[3] ($side + "_" + $midName + "Curl_anim")`;
+		
+		$ringAnimCrvs[0] = `rename $ringAnimCrvs[0] ($side + "_" + $ringName + "Curl_anim")`;
+		$ringAnimCrvs[1] = `rename $ringAnimCrvs[1] ($side + "_" + $ringName + "Curl_anim")`;
+		$ringAnimCrvs[2] = `rename $ringAnimCrvs[2] ($side + "_" + $ringName + "Curl_anim")`;
+		$ringAnimCrvs[3] = `rename $ringAnimCrvs[3] ($side + "_" + $ringName + "Curl_anim")`;
+		
+		$pinkyAnimCrvs[0] = `rename $pinkyAnimCrvs[0] ($side + "_" + $pinkyName + "Curl_anim")`;
+		$pinkyAnimCrvs[1] = `rename $pinkyAnimCrvs[1] ($side + "_" + $pinkyName + "Curl_anim")`;
+		$pinkyAnimCrvs[2] = `rename $pinkyAnimCrvs[2] ($side + "_" + $pinkyName + "Curl_anim")`;
+		$pinkyAnimCrvs[3] = `rename $pinkyAnimCrvs[3] ($side + "_" + $pinkyName + "Curl_anim")`;
+	}
+	//thumb joints rename anim curves
+	for ($jnt=0;$jnt<2;++$jnt)
+	{
+		string $thumbName = returnObjName ($thumbJts[$jnt]);
+		string $thumbBlndWghts[] = `listConnections -t blendWeighted -d 0 -s 1 -scn 1 $thumbJts[($jnt)]`;
+		$thumbBlndWghts[0] = `rename $thumbBlndWghts[0] ($side + "_" + $thumbName + "_bw")`;
+		string $thumbAnimCrvs[] = `listConnections -t animCurve -d 0 -s 1 -scn 1 $thumbBlndWghts[0]`;
+		$thumbAnimCrvs[0] = `rename $thumbAnimCrvs[0] ($side + "_" + $thumbName + "Curl_anim")`;
+		$thumbAnimCrvs[1] = `rename $thumbAnimCrvs[1] ($side + "_" + $thumbName + "Scrnch_anim")`;
+		$thumbAnimCrvs[2] = `rename $thumbAnimCrvs[2] ($side + "_" + $thumbName + "Relax_anim")`;
+		$thumbAnimCrvs[3] = `rename $thumbAnimCrvs[3] ($side + "_" + $thumbName + "Cup_anim")`;
+
+		string $thumbRotX[] = `listConnections -t animCurve -d 0 -s 1 -scn 1 $thumbJts[0]`;
+		$thumbRotX[0] = `rename $thumbRotX[0] ($side + "_thumb02CupX_anim")`;
+	}
+	
+	//hand spread
+	//index
+	setDrivenKeyframe -dv 0 -v 0 -cd ($handCt + ".spread") ($indexJts[0] + ".ry");
+	setDrivenKeyframe -dv 10 -v -40 -cd ($handCt + ".spread") ($indexJts[0] + ".ry");
+	setDrivenKeyframe -dv -10 -v 20	-cd ($handCt + ".spread") ($indexJts[0] + ".ry");
+	//mid
+	setDrivenKeyframe -dv 0 -v 0 -cd ($handCt + ".spread") ($midJts[0] + ".ry");
+	setDrivenKeyframe -dv 10 -v -6 -cd ($handCt + ".spread") ($midJts[0] + ".ry");
+	setDrivenKeyframe -dv -10 -v 3	-cd ($handCt + ".spread") ($midJts[0] + ".ry");
+	//ring
+	setDrivenKeyframe -dv 0 -v 0 -cd ($handCt + ".spread") ($ringJts[0] + ".ry");
+	setDrivenKeyframe -dv 10 -v 14 -cd ($handCt + ".spread") ($ringJts[0] + ".ry");
+	setDrivenKeyframe -dv -10 -v -13 -cd ($handCt + ".spread") ($ringJts[0] + ".ry");
+	//pinky
+	setDrivenKeyframe -dv 0 -v 0 -cd ($handCt + ".spread") ($pinkyJts[0] + ".ry");
+	setDrivenKeyframe -dv 10 -v 42 -cd ($handCt + ".spread") ($pinkyJts[0] + ".ry");
+	setDrivenKeyframe -dv -10 -v -20 -cd ($handCt + ".spread") ($pinkyJts[0] + ".ry");
+	//thumb spread
+	setDrivenKeyframe -dv 0 -v 0 -cd ($handCt + ".thumbSpread") ($thumbJts[0] + ".ry");
+	setDrivenKeyframe -dv 10 -v -42 -cd ($handCt + ".thumbSpread") ($thumbJts[0] + ".ry");
+	setDrivenKeyframe -dv -10 -v 34 -cd ($handCt + ".thumbSpread") ($thumbJts[0] + ".ry");
+	
+	//rename spread dd anim crvs mid fingers have blend weights
+	for ($jnt=0;$jnt<1;++$jnt)
+	{
+		string $indexName = returnObjName ($indexJts[0]);
+		string $pinkyName = returnObjName ($pinkyJts[0]);
+		string $thumbName = returnObjName ($thumbJts[0]);
+		
+		//anim curves
+		string $indexAnimCrvs[] = `listConnections -t animCurve -d 0 -s 1 -scn 1 $indexJts[0]`;
+		string $pinkyAnimCrvs[] = `listConnections -t animCurve -d 0 -s 1 -scn 1 $pinkyJts[0]`;
+		string $thumbAnimCrvs[] = `listConnections -t animCurve -d 0 -s 1 -scn 1 $thumbJts[0]`;
+
+		$indexAnimCrvs[0] = `rename $indexAnimCrvs[0] ($side + "_" + $indexName + "Sprd_anim")`;
+		$pinkyAnimCrvs[1] = `rename $pinkyAnimCrvs[1] ($side + "_" + $pinkyName + "Sprd_anim")`;
+		$thumbAnimCrvs[1] = `rename $thumbAnimCrvs[1] ($side + "_" + $thumbName + "Sprd_anim")`;
+
+	}
+	
+	//hand mid spread
+	//mid
+	setDrivenKeyframe -dv 0 -v 0 -cd ($handCt + ".midSpread") ($midJts[0] + ".ry");
+	setDrivenKeyframe -dv 10 -v 15 -cd ($handCt + ".midSpread") ($midJts[0] + ".ry");
+	setDrivenKeyframe -dv -10 -v -10	-cd ($handCt + ".midSpread") ($midJts[0] + ".ry");
+	//ring
+	setDrivenKeyframe -dv 0 -v 0 -cd ($handCt + ".midSpread") ($ringJts[0] + ".ry");
+	setDrivenKeyframe -dv 10 -v 12 -cd ($handCt + ".midSpread") ($ringJts[0] + ".ry");
+	setDrivenKeyframe -dv -10 -v -11 -cd ($handCt + ".midSpread") ($ringJts[0] + ".ry");
+	
+	//rename spread curves and bw's
+	string $midName = returnObjName ($midJts[0]);
+	string $ringName = returnObjName ($ringJts[0]);
+		
+	string $midBlndWghts[] = `listConnections -t blendWeighted -d 0 -s 1 -scn 1 $midJts[0]`;
+	string $ringBlndWghts[] = `listConnections -t blendWeighted -d 0 -s 1 -scn 1 $ringJts[0]`;
+	
+	$midBlndWghts[1] = `rename $midBlndWghts[1] ($side + "_" + $midName + "Y_bw")`;
+	$ringBlndWghts[1] = `rename $ringBlndWghts[1] ($side + "_" + $ringName + "Y_bw")`;
+
+	string $midAnimCrv[] = `listConnections -t animCurve -d 0 -s 1 -scn 1 $midBlndWghts[1]`;
+	string $ringAnimCrv[] = `listConnections -t animCurve -d 0 -s 1 -scn 1 $ringBlndWghts[1]`;
+	
+	rename $midAnimCrv[0] ($side + "_" + $midName + "Sprd_anim");
+	rename $midAnimCrv[1] ($side + "_" + $midName + "MidSprd_anim");
+	rename $ringAnimCrv[0] ($side + "_" + $ringName + "Sprd_anim");
+	rename $ringAnimCrv[1] ($side + "_" + $ringName + "MidSprd_anim");
+	
+
+	/////////////////////////////////////////////////////////////////////////////////////
+ 	
+	//duplicate the anim curves and hook them up to the individual ctrls
+	//get curl
+	string $curls[] = `listConnections ($side + "_hand_ct.curl")`;
+
+	int $i =0;
+	// duplicate the curl anim curves
+	for ($curl in $curls)
+	{
+		//index jts are 0-2 in $curls, mid jts are 3-5, ring 6-8, pinky 9-11
+		string $name = returnSection ($curl, 3);
+		string $attrName = returnSuffix ($curl);
+		//get blend weighted node for each anim curve
+		string $blend[] = `listConnections -d 1 -s 0 -scn 1 $curl`;
+		//get number of inputs to use as the input value to hookup the new curl to
+		int $blendInput = size ($blend) + 3;
+		//duplicate anim curve
+		string $newCurl[] = `duplicate -n ($curl + "_fing") $curl`;
+
+		//hook up ctrls to new anim curves
+		if ($i<3)
+		{
+			connectAttr -f ($indexCt + ".curl") ($newCurl[0] + ".input");
+			$i++;
+		}
+		else if ($i>2 && $i<6)
+		{
+			connectAttr -f ($midCt + ".curl") ($newCurl[0] + ".input");
+			$i++;
+		}
+		else if ($i>5 && $i<9)
+		{
+			connectAttr -f ($ringCt + ".curl") ($newCurl[0] + ".input");
+			$i++;
+		}
+		else if ($i>8 && $i<12)
+		{
+			connectAttr -f ($pinkyCt + ".curl") ($newCurl[0] + ".input");
+			$i++;
+		}
+		
+		//hookup new anim curve to blend weight
+		connectAttr -f ($newCurl[0] + ".output") ($blend[0] + ".input[" + $blendInput + "]"); 
+	} 
+ 
+	//duplicate the anim curves and hook them up to the individual ctrls
+	//get scrunch
+	string $scrunches[] = `listConnections ($side + "_hand_ct.scrunch")`;
+	int $i=0;
+	// duplicate the curl anim curves
+	for ($scrnch in $scrunches)
+	{
+		//index jts are 0-2, mid jts are 3-5, ring 6-8, pinky 9-11
+		string $name = returnSection ($scrnch, 3);
+		string $attrName = returnSuffix ($scrnch);
+		//get blend weighted node for each anim curve
+		string $blend[] = `listConnections -d 1 -s 0 -scn 1 $scrnch`;
+		//get number of inputs to use as the input value to hookup the new curl to
+		int $blendInput = size ($blend) + 4;
+		//duplicate anim curve
+		string $newScrnch[] = `duplicate -n ($scrnch + "_fing") $scrnch`;
+
+		//hook up ctrls to new anim curves
+		if ($i<3)
+		{
+			connectAttr -f ($indexCt + ".scrunch") ($newScrnch[0] + ".input");
+			$i++;
+		}
+		else if ($i>2 && $i<6)
+		{
+			connectAttr -f ($midCt + ".scrunch") ($newScrnch[0] + ".input");
+			$i++;
+		}
+		else if ($i>5 && $i<9)
+		{
+			connectAttr -f ($ringCt + ".scrunch") ($newScrnch[0] + ".input");
+			$i++;
+		}
+		else if ($i>8 && $i<12)
+		{
+			connectAttr -f ($pinkyCt + ".scrunch") ($newScrnch[0] + ".input");
+			$i++;
+		}
+		
+		//hookup new anim curve to blend weight
+		connectAttr -f ($newScrnch[0] + ".output") ($blend[0] + ".input[" + $blendInput + "]");
+	} 
+ 	 
+	//duplicate the anim curves and hook them up to the individual ctrls
+
+	string $index01Name = returnObjName ($indexJts[0]);
+	
+	string $indexSpreadCrv = ($side + "_indxFing01Sprd_anim");
+	string $newIndxSprd[] = `duplicate -n ($indexSpreadCrv + "_fing") $indexSpreadCrv`;
+	
+	string $indexSprdBlnd = `createNode blendWeighted -n ($side + "_" + $index01Name + "Y_bw")`;
+	
+	connectAttr -f ($indexSpreadCrv + ".output") ($indexSprdBlnd + ".input[0]");
+	connectAttr -f ($newIndxSprd[0] + ".output") ($indexSprdBlnd + ".input[1]");
+	
+	connectAttr -f ($indexCt + ".spread") ($newIndxSprd[0] + ".input");
+	connectAttr -f ($indexSprdBlnd + ".output") ($indexJts[0] + ".ry");
+	
+	///////////////
+	
+	string $midSpread[] = `listConnections -d 0 -s 1 -t animCurve -scn 1 ($side + "_midFing01Y_bw")`;
+	string $midSpreadDup[] = `duplicate -n ($midSpread[0] + "_fing") $midSpread[0]`;
+	
+	connectAttr -f ($midCt + ".spread") ($midSpreadDup[0] + ".input");
+	connectAttr -f ($midSpreadDup[0] + ".output") ($side + "_midFing01Y_bw.input[2]");
+	
+	///////////////
+	
+	string $ringSpread[] = `listConnections -d 0 -s 1 -t animCurve -scn 1 ($side + "_ringFing01Y_bw")`;
+	string $ringSpreadDup[] = `duplicate -n ($ringSpread[0] + "_fing") $ringSpread[0]`;
+	
+	connectAttr -f ($ringCt + ".spread") ($ringSpreadDup[0] + ".input");
+	connectAttr -f ($ringSpreadDup[0] + ".output") ($side + "_ringFing01Y_bw.input[2]");
+	
+	///////////////
+	
+	string $pinky01Name = returnObjName ($pinkyJts[0]);
+	
+	string $pinkySpreadCrv = ($side + "_pnkyFing01Sprd_anim");
+	string $newPinkySprd[] = `duplicate -n ($pinkySpreadCrv + "_fing") $pinkySpreadCrv`;
+	
+	string $pinkySprdBlend = `createNode blendWeighted -n ($side + "_" + $pinky01Name + "Y_bw")`;
+	
+	connectAttr -f ($pinkySpreadCrv + ".output") ($pinkySprdBlend + ".input[0]");
+	connectAttr -f ($newPinkySprd[0] + ".output") ($pinkySprdBlend + ".input[1]");
+	
+	connectAttr -f ($pinkyCt + ".spread") ($newPinkySprd[0] + ".input");
+	connectAttr -f ($pinkySprdBlend + ".output") ($pinkyJts[0] + ".ry");
+	
+	//////////////
+	
+	for ($jnt=1;$jnt<3;$jnt++)
+	{
+		string $thumbName = returnObjName ($thumbJts[($jnt)]);
+		int $blendInput = $jnt + 3;
+		
+		string $thumbCurlCrv = ($side + "_thumb0" + $jnt + "Curl_anim");
+		string $newThumbCurl[] = `duplicate -n ($thumbCurlCrv + "_fing") $thumbCurlCrv`;
+		
+		connectAttr -f ($thumbCt + ".curl") ($newThumbCurl[0] + ".input");
+		connectAttr -f ($newThumbCurl[0] + ".output") ($side + "_thumb0" + $jnt + "_bw.input[" + $blendInput + "]");
+		
+		string $thumbScrnchCrv = ($side + "_thumb0" + $jnt + "Scrnch_anim");
+		string $newThumbScrnch[] = `duplicate -n ($thumbScrnchCrv + "_fing") $thumbScrnchCrv`;
+		
+		connectAttr -f ($thumbCt + ".scrunch") ($newThumbScrnch[0] + ".input");
+		connectAttr -f ($newThumbScrnch[0] + ".output") ($side + "_thumb0" + $jnt + "_bw.input[" + ($blendInput+1) + "]");
+	}
+	
+	///////////////
+	
+	string $thumb01Name = returnObjName ($thumbJts[0]);
+	
+	string $thumbSpreadCrv = ($side + "_thumb01Sprd_anim");
+	string $newthumbSprd[] = `duplicate -n ($thumbSpreadCrv + "_fing") $thumbSpreadCrv`;
+	
+	string $thumbSprdBlend = `createNode blendWeighted -n ($side + "_" + $thumb01Name + "Y_bw")`;
+	
+	connectAttr -f ($thumbSpreadCrv + ".output") ($thumbSprdBlend + ".input[0]");
+	connectAttr -f ($newthumbSprd[0] + ".output") ($thumbSprdBlend + ".input[1]");
+	
+	connectAttr -f ($thumbCt + ".spread") ($newthumbSprd[0] + ".input");
+	connectAttr -f ($thumbSprdBlend + ".output") ($thumbJts[0] + ".ry");
+	
+	//parent shape and ct curves to ctrl
+	parentShape (($side + "_hand_shpShape"),$handCt);
+	
+	//aling finger ctrls
+	for ($ct in $fingersCt)
+	{
+		alignTrans ($handCt, $ct);
+
+		alignRot ($handCt, $ct);
+		//parent finger ctrls to hand ct
+		parent $ct $handCt;
+	}
+	
+	///////////////////////////////////////////////////////////////////////////////
+	// create individual finger DD keys
+	//thumb orbit
+	setDrivenKeyframe -dv 0 -v 0 -cd ($thumbCt + ".orbit") ($side + "_thumb01_jt.rx");
+	setDrivenKeyframe -dv 10 -v 80 -cd ($thumbCt + ".orbit") ($side + "_thumb01_jt.rx");
+	setDrivenKeyframe -dv -10 -v -60 -cd ($thumbCt + ".orbit") ($side + "_thumb01_jt.rx");
+	
+	//thumb twist
+	setDrivenKeyframe -dv 0 -v 0 -cd ($thumbCt + ".twist") ($thumbJts[1] + ".rx");
+	setDrivenKeyframe -dv 10 -v 90 -cd ($thumbCt + ".twist") ($thumbJts[1] + ".rx");
+	setDrivenKeyframe -dv -10 -v -90 -cd ($thumbCt + ".twist") ($thumbJts[1] + ".rx");
+	
+	//finger bends
+	for ($j=0;$j<2;$j++)
+	{
+		setDrivenKeyframe -dv 0 -v 0 -cd ($thumbCt + ".bend"+ ($j+1)) ($thumbJts[$j] + ".rz");
+		setDrivenKeyframe -dv 10 -v -90 -cd ($thumbCt + ".bend"+ ($j+1)) ($thumbJts[$j] + ".rz");
+		setDrivenKeyframe -dv -10 -v 90 -cd ($thumbCt + ".bend"+ ($j+1)) ($thumbJts[$j] + ".rz");
+	}
+	for ($j=0;$j<3;$j++)
+	{
+		setDrivenKeyframe -dv 0 -v 0 -cd ($indexCt + ".bend"+($j+1)) ($indexJts[$j] + ".rz");
+		setDrivenKeyframe -dv 10 -v -90 -cd ($indexCt + ".bend"+($j+1)) ($indexJts[$j] + ".rz");
+		setDrivenKeyframe -dv -10 -v 90 -cd ($indexCt + ".bend"+($j+1)) ($indexJts[$j] + ".rz");
+		
+		setDrivenKeyframe -dv 0 -v 0 -cd ($midCt + ".bend"+($j+1)) ($midJts[$j] + ".rz");
+		setDrivenKeyframe -dv 10 -v -90 -cd ($midCt + ".bend"+($j+1)) ($midJts[$j] + ".rz");
+		setDrivenKeyframe -dv -10 -v 90 -cd ($midCt + ".bend"+($j+1)) ($midJts[$j] + ".rz");
+		
+		setDrivenKeyframe -dv 0 -v 0 -cd ($ringCt + ".bend"+($j+1)) ($ringJts[$j] + ".rz");
+		setDrivenKeyframe -dv 10 -v -90 -cd ($ringCt + ".bend"+($j+1)) ($ringJts[$j] + ".rz");
+		setDrivenKeyframe -dv -10 -v 90 -cd ($ringCt + ".bend"+($j+1)) ($ringJts[$j] + ".rz");
+		
+		setDrivenKeyframe -dv 0 -v 0 -cd ($pinkyCt + ".bend"+($j+1)) ($pinkyJts[$j] + ".rz");
+		setDrivenKeyframe -dv 10 -v -90 -cd ($pinkyCt + ".bend"+($j+1)) ($pinkyJts[$j] + ".rz");
+		setDrivenKeyframe -dv -10 -v 90 -cd ($pinkyCt + ".bend"+($j+1)) ($pinkyJts[$j] + ".rz");
+	}
+	//finger twist
+	setDrivenKeyframe -dv 0 -v 0 -cd ($indexCt + ".twist") ($indexJts[0] + ".rx");
+	setDrivenKeyframe -dv 10 -v 90 -cd ($indexCt + ".twist") ($indexJts[0] + ".rx");
+	setDrivenKeyframe -dv -10 -v -90 -cd ($indexCt + ".twist") ($indexJts[0] + ".rx");
+	
+	setDrivenKeyframe -dv 0 -v 0 -cd ($midCt + ".twist") ($midJts[0] + ".rx");
+	setDrivenKeyframe -dv 10 -v 90 -cd ($midCt + ".twist") ($midJts[0] + ".rx");
+	setDrivenKeyframe -dv -10 -v -90 -cd ($midCt + ".twist") ($midJts[0] + ".rx");
+	
+	setDrivenKeyframe -dv 0 -v 0 -cd ($ringCt + ".twist") ($ringJts[0] + ".rx");
+	setDrivenKeyframe -dv 10 -v 90 -cd ($ringCt + ".twist") ($ringJts[0] + ".rx");
+	setDrivenKeyframe -dv -10 -v -90 -cd ($ringCt + ".twist") ($ringJts[0] + ".rx");
+	
+	setDrivenKeyframe -dv 0 -v 0 -cd ($pinkyCt + ".twist") ($pinkyJts[0] + ".rx");
+	setDrivenKeyframe -dv 10 -v 90 -cd ($pinkyCt + ".twist") ($pinkyJts[0] + ".rx");
+	setDrivenKeyframe -dv -10 -v -90 -cd ($pinkyCt + ".twist") ($pinkyJts[0] + ".rx");
+	/*
+	//connect scale x of each joint to the length attr
+	for ($j=0;$j<3;$j++)
+	{
+		//connectAttr -f ($thumbCt + ".length") ($thumbJts[($j+1)] + ".sx");
+		connectAttr -f ($indexCt + ".length") ($indexJts[$j] + ".sx");
+		connectAttr -f ($midCt + ".length") ($midJts[$j] + ".sx");
+		connectAttr -f ($ringCt + ".length") ($ringJts[$j] + ".sx");
+		connectAttr -f ($pinkyCt + ".length") ($pinkyJts[$j] + ".sx");
+	}
+	*/
+	/*
+	//get ct gp
+	string $handGp = returnParent($handCt);
+	
+	//constrain the hand ctrl group to the wrist joint
+	parentConstraint $joints[0] $handGp;
+	
+	parent $handGp "n_CT_gp";
+	*/
+	//set keyframes to linear
+	string $keys[] = `ls -typ animCurve`;
+	for ($key in $keys)
+	{
+		keyTangent -e -itt "linear" -ott "linear" $key;
+	}
+	
+}
+
+global proc createHandSetup()
+{
+	string $sides[] = {"l","r"};
+	for ($side in $sides)
+	{
+		x_handSetup ({($side + "_wrist_jt"),($side + "_palm_jt"),
+		($side + "_indxFing01_jt"),($side + "_indxFing02_jt"),($side + "_indxFing03_jt"),
+		($side + "_midFing01_jt"),($side + "_midFing02_jt"),($side + "_midFing03_jt"),
+		($side + "_ringFing01_jt"),($side + "_ringFing02_jt"),($side + "_ringFing03_jt"),
+		($side + "_pnkyFing01_jt"),($side + "_pnkyFing02_jt"),($side + "_pnkyFing03_jt")});
+	}
+}

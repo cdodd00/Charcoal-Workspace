@@ -1,0 +1,119 @@
+/*
+    --x_alignLib.mel--	
+	Library to align objects to one another in different ways
+	
+	based on Solsona's script
+
+	Chance B. Dodd 10/05/11
+
+*/
+
+// alignTrans
+// align Translate channels using parenting and unparenting
+/////////////////
+
+global proc alignTrans(string $source, string $obj)
+{
+	parent $obj $source;
+	setAttr ($obj + ".t") 0 0 0;
+	parent -w $obj;
+}
+
+// alignRot
+// aligns the rotations using parenting and unparenting
+///////////////
+
+global proc alignRot(string $source, string $obj)
+{
+	parent $obj $source;
+	setAttr ($obj + ".r") 0 0 0;
+	parent -w $obj;
+}
+
+// constPos
+// constrains the object to the sources position using a point const.
+// then deletes it. Also freezes transforms if $freeze is 1.
+//////////////
+
+global proc constPos(string $source, string $obj, int $freeze)
+{
+    pointConstraint -name "temp_pc" $source $obj;
+    delete temp_pc;
+    
+    // $freeze is 1 or on then freeze translate channels on the object
+    if ($freeze)
+    {
+        makeIdentity -apply true -translate true $obj;
+    }
+    
+}
+
+// constRot
+// constraings the object to the source using orient const 
+// then deletes it. Also freezes rotations if $freeze is 1
+//////////////
+
+global proc constRot(string $source, string $obj, int $freeze)
+{
+    orientConstraint -name "temp_oc" $source $obj;
+    delete temp_oc;
+    
+    // $freeze is 1 or on then freeze rotate channels on the object
+    if ($freeze)
+    {
+        makeIdentity -apply true -rotate true $obj;
+    }
+}
+
+// xformWSPos
+// aligns the objects translation using xform cmd
+///////////////
+
+global proc xformWSPos(string $source, string $obj, int $freeze)
+{
+    string $temp = `createNode transform`;
+    constPos ($source, $temp, 0);
+    
+    // get translates of empty group
+    float $pos[] = `getAttr ($temp + ".translate")`;
+    
+    //move the object to the temp group
+    move -worldSpace $pos[0] $pos[1] $pos[2] $obj;
+    
+    // $freeze is 1 or on then freeze translate channels on the object
+    if ($freeze)
+    {
+        makeIdentity -apply true -translate true $obj;
+    }
+    
+    delete $temp;
+}
+
+// xformWSRot
+// aligns the objects rotation using xform cmd
+////////////////
+
+global proc xformWSRot(string $source, string $obj, int $freeze)
+{
+    string $temp = `createNode transform`;
+    constRot ($source, $temp, 0);
+    
+    //get rotates of emtpy group
+    float $rot[] = `getAttr ($source + ".rotate")`;
+    
+    //rotate the object inline with the empty group
+    rotate -worldSpace $rot[0] $rot[1] $rot[2] $obj;
+    
+    // $freeze is 1 or on then freeze rotate channels on the object
+    if ($freeze)
+    {
+        makeIdentity -apply true -rotate true $obj;
+    }
+    
+    delete $temp;
+}
+
+
+
+
+

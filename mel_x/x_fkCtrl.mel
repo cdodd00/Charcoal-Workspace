@@ -1,0 +1,18 @@
+global proc x_fkCtrl (string $axis)
+{
+	string $sel[] = `ls -sl`;
+	
+	for ($obj in $sel)
+	{
+		if ($axis == "x"){
+			$circle = `circle -c 0 0 0 -nr 1 0 0 -sw 360 -r 2 -d 3 -ut 0 -tol 0.000393701 -s 8 -ch 1 -n "cool"`;
+		}
+		if ($axis == "z"){
+			$circle = `circle -c 0 0 0 -nr 0 0 1 -sw 360 -r 2 -d 3 -ut 0 -tol 0.000393701 -s 8 -ch 1 -n "cool"`;
+		}
+		parent -r -s coolShape $obj;
+		rename coolShape ($obj + "Shape");
+		delete cool;
+		select $obj;
+	}
+}

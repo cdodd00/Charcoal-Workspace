@@ -1,0 +1,25 @@
+/*
+	First create a quick select set of verts,
+	Name it specifically "mirrorVerts"
+	Run script to mirror weights from +x to -x
+	
+	
+*/
+
+global proc x_mirrorWghts()
+{
+
+	int $time = `currentTime -q` ;
+	string $sel[] = `ls -sl`;
+
+	currentTime 1;
+
+	select -cl;
+	select -r mirrorVerts ;
+	copySkinWeights -mirrorMode YZ -surfaceAssociation closestPoint -influenceAssociation closestJoint;
+
+	currentTime $time;
+	select $sel[0];
+	ArtPaintSkinWeightsToolOptions;
+	
+}

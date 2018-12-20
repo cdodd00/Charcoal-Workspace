@@ -1,0 +1,28 @@
+//creates the aim constraint on the joint to the selected ctrl
+//must have selected, eye ct, joint to constrain, head ct to parent up object to.
+
+global proc x_eyeSetup(){
+	
+	source x_alignLib.mel;
+	source x_stringLib.mel;
+	
+	string $sel[] = `ls -sl`;
+	string $ctrl = $sel[0];
+	string $jnt = $sel[1];
+	string $headCt = $sel[2];
+	string $side = returnSide($jnt);
+		
+	string $loc[] = `spaceLocator -n ($side + "_eyeUp_loc")`;
+	
+	xformWSPos ($jnt, $loc[0],0);
+	
+	move -y 2 0 0 -r $loc[0];
+	
+	aimConstraint -offset 0 0 0 -w 1 -aimVector 0 0 1 -upVector 0 1 0 
+	-worldUpType "object" -worldUpObject $loc[0] $ctrl $jnt;
+	
+	parent $loc[0] $headCt;
+	setAttr ($loc[0] + ".v") 0;
+	
+}
+

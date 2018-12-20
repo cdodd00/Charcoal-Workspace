@@ -1,0 +1,55 @@
+/*
+	creates two locators for heel roll, adds attr to first ctrl
+	needs to have ik handle already created
+	Just need to place locators after creation to finish setup
+	
+*/
+
+global proc x_footSetup(){
+	
+	source x_stringLib.mel;
+	source x_alignLib.mel;
+	
+	string $sel[] = `ls -sl`;
+	string $ctrl = $sel[0];
+	string $ctrl02 = returnParent ($sel[1]);
+	string $side = returnSide ($ctrl);
+	string $name = returnObjName ($ctrl);
+	
+	addAttr -ln "heel"  -at double -k 1 -min -100 -max 100 -dv 0 $ctrl;
+		
+	string $loc01[] = `spaceLocator -n ($side + "_" + $name + "_rot01_loc")`;
+	alignTrans ($ctrl, $loc01[0]);
+	alignRot ($ctrl, $loc01[0]);
+	parent $loc01[0] $ctrl;
+	setAttr ($loc01[0] + ".ty") -1;
+	setAttr ($loc01[0] + ".tz") -2;
+	setAttr ($loc01[0] + ".sx") 1;
+	setAttr ($loc01[0] + ".sy") 1;
+	setAttr ($loc01[0] + ".sz") 1;
+	
+	string $loc02[] = `duplicate -n ($side + "_" + $name + "_rot02_loc")`;
+	alignTrans ($ctrl02, $loc02[0]);
+	alignRot ($ctrl02, $loc02[0]);
+	parent $loc02[0] $ctrl;
+	
+	string $loc03[] = `duplicate -n ($side + "_" + $name + "_rot03_loc")`;
+	
+	parent $ctrl02 $ctrl;
+	parent ($side + "_" + $name + "_ikh") $loc02[0];
+	
+	setDrivenKeyframe -dv 0 -v 0 -cd ($ctrl + ".heel") ($loc01[0] + ".rz");
+	setDrivenKeyframe -dv 0 -v 0 -cd ($ctrl + ".heel") ($loc02[0] + ".rz");
+	setDrivenKeyframe -dv -100 -v -100 -cd ($ctrl + ".heel") ($loc01[0] + ".rz");
+	setDrivenKeyframe -dv 100 -v 100 -cd ($ctrl + ".heel") ($loc02[0] + ".rz");
+	
+	string $keys[] = `ls -typ animCurve`;
+	for ($key in $keys)
+	{
+		keyTangent -e -itt "linear" -ott "linear" $key;
+		
+	}
+	
+	select $loc01[0];
+	
+}

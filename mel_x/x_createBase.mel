@@ -1,0 +1,52 @@
+/*
+	--x_createBase.mel--
+	
+	creates base groups for constructring the rig
+	the name of the base is passed as a variable
+	This will create a main character/section group,
+	global/world ctrl group, a switch ctrl group, and a
+	doNotTouch or riggingNodes group.
+	
+	based on Solsona's setup script
+
+	Chance B. Dodd 10/10/11
+
+*/
+
+global proc x_createBase(string $rig)
+{
+	//create main character group
+	string $main = `createNode transform -n ($rig + "_all_gp")`;
+	
+	//create global/world group and ctrl
+	string $global = `createNode transform -n "c_global_ct_gp"`;
+	string $globalCtrl = `createNode transform -n "c_global_ct"`;
+	
+	//parent new groups together and to main group
+	parent $globalCtrl $global;
+	parent $global $main;
+	
+	//create the switch ctrl and parent it to the main group
+	string $switch = `createNode transform -n "n_switch_ct"`;
+	parent $switch $globalCtrl;
+	
+	//create a do not touch group
+	string $noTouch = `createNode transform -n "n_rigNodes_gp"`;
+	parent $noTouch $globalCtrl;
+	
+	//setup the scale y attr on the main ct to both x and z and rename to "scale"
+	connectAttr ($main + ".sy") ($main + ".sx");
+	connectAttr ($main + ".sy") ($main + ".sz");
+	aliasAttr "Scale" ($main + ".sy");
+	//and the global ctrl
+	connectAttr ($globalCtrl + ".sy") ($globalCtrl + ".sx");
+	connectAttr ($globalCtrl + ".sy") ($globalCtrl + ".sz");
+	aliasAttr "Scale" ($globalCtrl + ".sy");
+	//lock and hide scale x and z
+	setAttr -l 1 -k 0 ($main + ".sx");
+	setAttr -l 1 -k 0 ($main + ".sz");
+	setAttr -l 1 -k 0 ($globalCtrl + ".sx");
+	setAttr -l 1 -k 0 ($globalCtrl + ".sz");
+	
+	select $main;
+}

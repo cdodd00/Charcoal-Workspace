@@ -1,0 +1,259 @@
+/*
+	Script: x_blendAttrsUI.mel
+	Author: Chance B. Dodd
+	Version: 1.0 created May 2009
+	
+	Description: Window to setup two separate objects to control one objects selected attributes
+					It will also create a controller attribute to switch between the two objects
+					if you choose to. Creates a blendColors node for each object and translate or 
+					rotate attributes. Will also connect a control attr to the blender attr if selected.
+	
+	Use: Input an fk joint and ik joint a target joint and select which attribute to connect.
+			If selected input a controller and type in an attr name to drive the blend between the 
+			two chains.
+*/
+
+global proc x_blendAttrsUI(){
+string $win = "x_blendAttrsUI";
+
+
+if (`window -exists $win`)
+	deleteUI $win;	
+	
+window 
+	-title "Blend Attrs"
+	-resizeToFitChildren 1
+	-sizeable 1
+	$win;
+	
+//layout
+columnLayout -adj 1;
+	
+string $form = `formLayout -nd 100`;
+	
+	textFieldButtonGrp 
+		-l "object 1 (fk)"
+		-bl "Load Selected"
+		-cw3 80 150 1
+		tfbgOne;
+		
+	textFieldButtonGrp 
+		-l "object 2 (ik)"
+		-bl "Load Selected"
+		-cw3 80 150 1
+		tfbgTwo;
+	
+	textFieldButtonGrp 
+		-l "Target Object"
+		-bl "Load Selected"
+		-cw3 80 150 1
+		tfbgThree;
+		
+	radioButtonGrp
+		-nrb 3
+		-cw4 70 55 70 70
+		-ct4 both both both both
+		-co4 5 5 5 5 
+		-sl 1
+		-l "Attribute"
+		-la3 "rot" "trans" "scale"
+		radioOne;
+		
+	checkBox 
+		-l "Connect A Control Attribute To The Blender Attribute" 
+		-v 1
+		chkBox;
+		
+	textFieldButtonGrp 
+			-l "Controller"
+			-bl "Load Selected"
+			-cw3 80 150 1
+			tfbgFour;
+	
+	textFieldGrp
+		-l "Attr Name"
+		-cw2 80 150
+		tfOne;
+
+	button -l "Cancel" btnCancel;
+	button -l "Accept" btnAccept; 
+	
+		setParent ..; setParent ..; 
+		
+formLayout -e
+		-af tfbgOne "top" 10
+		-ap tfbgOne "left" 0 1
+		-af tfbgOne "right" 10
+		
+		-ac tfbgTwo "top" 10 tfbgOne
+		-ap tfbgTwo "left" 0 1
+		-af tfbgTwo "right" 10
+		
+		-ac tfbgThree "top" 20 tfbgTwo
+		-ap tfbgThree "left" 0 1
+		-af tfbgThree "right" 10
+		
+		-ac radioOne top 5 tfbgThree
+		-ap radioOne left 1	1
+			
+		-ac chkBox top 20 radioOne
+		-ap chkBox left 0 10
+		
+		-ac tfbgFour top 5 chkBox
+		-ap tfbgFour left 0 1
+		
+		-ac tfOne top 5 tfbgFour
+		-ap tfOne left 0 1
+	
+		-ac btnCancel top 5 tfOne
+		-af btnCancel left 0
+		-ap btnCancel right 0 50
+		
+		-ac btnAccept top 5 tfOne
+		-ap btnAccept left 0 50
+		-af btnAccept right 0
+		
+	$form;
+		
+	
+////////button edits
+
+	textFieldButtonGrp -e -bc "loadObjIntoTFBG tfbgOne" tfbgOne;
+
+	textFieldButtonGrp -e -bc "loadObjIntoTFBG tfbgTwo" tfbgTwo;
+		
+	textFieldButtonGrp -e 	-bc "loadObjIntoTFBG tfbgThree" tfbgThree;
+	
+	textFieldButtonGrp -e	-bc "loadObjIntoTFBG tfbgFour" tfbgFour;
+		
+	button -e -c "blendAttr()" btnAccept;
+	button -e -c ("deleteUI \"" + $win + "\"") btnCancel;
+	
+	checkBox -e 
+		-onc "textFieldButtonGrp -e -en 1 tfbgFour \
+				; textFieldGrp -e -en 1 tfOne "
+		-ofc "textFieldButtonGrp -e -en 0 tfbgFour \
+				;textFieldGrp -e -en 0 tfOne" chkBox;
+		
+showWindow $win;
+}
+
+//setup the the text fields and 'load selected' buttons--------------------------------------------
+
+global proc loadObjIntoTFBG (string $tfbg)
+{
+	string $selObj[] = `ls -sl`;
+	if (size ($selObj) > 0)
+	{
+		textFieldButtonGrp -e -tx $selObj[0] $tfbg;
+		print ($selObj[0] + " loaded \n");
+	}
+	else 
+	{
+		error "Select an object to load\n";
+	}
+}
+
+//---------------------------------------------------------------------------------
+//---------------------------------------------------------------------------------
+// main proc called when the accept button is clicked
+global proc blendAttr()
+{
+	//get text field text and store into vars
+	string $obj1Name = `textFieldButtonGrp -q -tx tfbgOne`;
+	string $obj2Name = `textFieldButtonGrp -q -tx tfbgTwo`;
+	string $targetName = `textFieldButtonGrp -q -tx tfbgThree`;
+	string $attrName;
+	string $blender;
+	int $chkBoxVal = `checkBox -query -value chkBox`;
+	string $ctrlObj = `textFieldButtonGrp -q -tx tfbgFour`;
+	string $ctrlAttr = `textFieldGrp -q -tx tfOne`;
+	
+	//error checking to make sure the fields have an object in them
+	if (size ($obj1Name) ==0)
+		error "You must have an object in object 1\n";
+	
+	if (size ($obj2Name) ==0)
+		error "You must have an object in object 2\n";
+		
+	if (size ($targetName) ==0)
+		error "You must have a target object\n";
+		
+	if ($chkBoxVal == 1) 
+	{
+		if (size ($ctrlObj) ==0)
+		error "You must have a control object\n";
+		
+		if (size ($ctrlAttr) ==0)
+		error "You must have an attribute name\n";
+	}
+		
+	//check which attr is selected
+	if (`radioButtonGrp -q -sl radioOne` ==1)
+	{
+		$attrName = "rotate";
+	}
+	else if (`radioButtonGrp -q -sl radioOne`==2)
+	{
+		$attrName = "translate";
+	}
+	else
+	{
+		$attrName = "scale";
+	}
+	
+	//create the blend node
+	
+	string $tmpBlender = `createNode blendColors`;
+	
+	//rename blendColors node if it is rotate add "_Rblnd" translate add "_Tblnd" or scale add "_Sblnd"
+	
+	if (`radioButtonGrp -q -sl radioOne` ==1)
+	{
+		$blender = `rename $tmpBlender ($targetName + "_Rblnd")`;
+	}
+	else if (`radioButtonGrp -q -sl radioOne`==2)
+	{
+		$blender = `rename $tmpBlender ($targetName + "_Tblnd")`;
+	}
+	else
+	{
+		$blender = `rename $tmpBlender ($targetName + "_Sblnd")`;
+	}
+	
+	//connect object one attributes to blender color1
+
+	connectAttr -f ($obj1Name + "." + $attrName + "X") ($blender + ".color2R");
+	connectAttr -f ($obj1Name + "." + $attrName + "Y") ($blender + ".color2G");
+	connectAttr -f ($obj1Name + "." + $attrName + "Z") ($blender + ".color2B");
+	
+	//connect object two attrs into blender color2
+	
+	connectAttr -f ($obj2Name + "." + $attrName + "X") ($blender + ".color1R");
+	connectAttr -f ($obj2Name + "." + $attrName + "Y") ($blender + ".color1G");
+	connectAttr -f ($obj2Name + "." + $attrName + "Z") ($blender + ".color1B");
+	
+	//connect blend output into target object
+	
+	connectAttr -f ($blender + ".outputR") ($targetName + "." + $attrName + "X");
+	connectAttr -f ($blender + ".outputG") ($targetName + "." + $attrName + "Y");
+	connectAttr -f ($blender + ".outputB") ($targetName + "." + $attrName + "Z");
+
+	// if check box is on create an attribute on the selected object and connect it to the blender attr
+
+	if ($chkBoxVal == 1) 
+	{
+		if (`attributeExists $ctrlAttr $ctrlObj`)
+		{
+			connectAttr -f ($ctrlObj + "." + $ctrlAttr) ($blender + ".blender");
+		}
+		else
+		{
+			addAttr -ln $ctrlAttr -k 1 -at "enum" -en "fk:ik:" $ctrlObj;
+			connectAttr -f ($ctrlObj + "." + $ctrlAttr) ($blender + ".blender");
+		}
+	}
+		
+	print ($blender + " created\n");
+}
+

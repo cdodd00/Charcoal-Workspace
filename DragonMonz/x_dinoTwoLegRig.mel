@@ -1,0 +1,244 @@
+global proc x_dinoTwoLegRig(string $openFile){
+	
+	source x_tailSetup.mel;
+    source x_constCt.mel;
+    source x_relativesLib.mel;
+    source x_circleZ.mel;
+    source x_eyeSetup.mel;
+    source x_curveLib.mel;
+    source x_alignLib.mel;
+    source x_ikFkBlend.mel;
+    source x_ikhLib.mel;
+    source x_footSetup.mel;
+    
+	string $sides[] = {"l", "r"};
+    
+    //set eye ct distace away from model
+    float $eyeCtDist = 10;
+    
+    //open base file
+	file -f -typ "mayaAscii" 
+	-o ("C:/Users/chanc/Documents/Work/PltdPic_HppyGnt/toy_project/scenes/" + $openFile);
+		
+    //create global ctrl    
+	string $globCt[] = `circle -c 0 0 0 -nr 0 1 0 -sw 360 -r 15 -d 3 -ut 0 -tol 0.01 -s 8 -ch 1 -n "global_ct"`;	
+	string $globCtGp = x_zeroGrp();
+	
+    //setup Root ct
+    string $rootCt = crvCtrl("box","c_root_ct", 6);
+    xformWSPos ("c_root_jt", $rootCt,0);
+    select -r $rootCt;
+    string $rootCtGp = x_zeroGrp();
+    parentConstraint $rootCt "c_root_jt";
+	
+    //setup spine
+    string $spineJts[]= `ls ("c_spine*" + "*_jt")`;
+    select $spineJts;
+    x_tailSetup();
+    select -cl;
+    
+    //setup Head and jaw
+    string $headJts[]= `ls ("c_head*" + "*_jt")`;
+    string $jawJts[]= `ls ("c_jaw*" + "*_jt")`;
+    select $headJts;
+    select -add $jawJts;
+    x_tailSetup();
+    select -cl;
+    
+    //setup eyes
+    select -r "c_eye_end";
+    x_circleZ();
+    //create and move main eye ct
+    string $mainEyeCt= `rename "c_eye_end_ct" "c_eye_ct"`;
+    float $mainEyeZ = `getAttr ($mainEyeCt + ".tz")`;
+    setAttr ($mainEyeCt + ".tz") ($mainEyeZ + $eyeCtDist); 
+    $mainEyeZ = `getAttr ($mainEyeCt + ".tz")`;
+    string $mainEyeCtGp = x_zeroGrp();
+    
+    //create and move l r eye ctrls to main eye ct
+    for ($side in $sides){
+        string $eyeJts[] = `ls ($side + "_eye*" + "*_jt")`;
+        select -r $eyeJts;
+        x_circleZ();
+        string $eyeCt[] = `ls ($side + "_eye_ct")`;
+        setAttr ($eyeCt[0] + ".tz") $mainEyeZ;
+        parent $eyeCt[0] $mainEyeCt;
+        string $eyeCtGp = x_zeroGrp();
+        string $eyeSelection[] = {($side + "_eye_ct"), $eyeJts[0], "c_head01_ct"};
+        select -cl;
+        select $eyeSelection;
+        x_eyeSetup();
+    }
+    select -cl;
+    
+    //setup tail
+    string $tailJts[] = `ls ("c_tail*" + "*_jt")`;
+    select $tailJts;
+    x_tailSetup();
+    select -cl;
+    
+    //tongue setup
+    string $tngJts[] = `ls ("c_tng*" + "*_jt")`;
+    select $tngJts;
+    x_tailSetup();
+    select -cl;
+    
+    //setup wings
+    for ($side in $sides){
+        string $wingJts[] = `ls ($side + "_wing*" + "*_jt")`;
+        select $wingJts;
+        x_tailSetup();
+        select -cl;
+    }
+    
+    //setup hip and clav ctrls
+    for ($side in $sides){
+        string $hipJts[] = `ls ($side + "_hip*" + "*_jt")`;
+        string $clavJts[] = `ls ($side + "_clav*" + "*_jt")`;
+        select $hipJts;
+        select -add $clavJts;
+        x_constCt();
+        select -cl;
+    }
+	
+	//Arms Setup
+	//IK FK duplicates and ctrls
+	for ($side in $sides){
+		string $armJts[] = `ls -typ "joint" ($side + "_arm*")`;
+		int $armJtSize = `size($armJts)`;
+		string $wristJt = $armJts[$armJtSize-3];//position for arm ct
+		select -r $wristJt;
+		x_circleX();
+		//create ik ctrls
+		string $armCt = `rename ($side + "_arm_ct")`;
+		//flip right side scales for mvmnt mirroring 
+		if ($side == "r"){
+			setAttr ($armCt + ".s") -1 -1 -1;			
+			}
+		string $armCtGp = x_zeroGrp();
+		
+		//create pv ct
+		string $elbowJt = $armJts[1];
+		select -r $elbowJt;
+		x_circleZ();
+		string $pvCt = `rename ($side + "_elbow_ct")`;
+		//flip right side scales for mvmnt mirroring
+		if ($side == "r"){
+			setAttr ($pvCt + ".s") -1 -1 -1;			
+			}
+		string $pvCtGp = x_zeroGrp();
+		
+		//create hand ct
+		string $handJt = $armJts[$armJtSize-2];//position for hand ct
+		select -r $handJt;
+		x_circleX();
+		string $handCt = `rename ($side + "_hand_ct")`;
+		string $handCtGp = x_zeroGrp();
+		
+		//create dups
+        select $armJts;       
+        x_ikFkBlend("global_ct", ($side + "_arm_ct"));
+        select -cl;
+        
+        //create arm ik handles		
+		string $ikJoints[] = `ls -type "joint" ($side + "_arm*" + "*_ik")`;
+		string $armIkItems[] = {$ikJoints[0],$ikJoints[2],$armCt,$pvCt};
+		select -r $armIkItems;
+		simpleIkh();
+		
+		//create hand ik handles
+		int $ikJtSize = `size($ikJoints)`; 
+		string $wristIkJt = $ikJoints[$ikJtSize-3];//wrist ik jt
+		string $handIkJt = $ikJoints[$ikJtSize-2];//hand ik jt
+		string $hand02IkJt = $ikJoints[$ikJtSize-1];//hand ik jt
+		//handles
+		string $hand01Ikh []= `ikHandle -sol ikSCsolver -sj $wristIkJt -ee $handIkJt 
+		    -n ($side + "_hand01_ikh")`;
+		string $hand02Ikh []= `ikHandle -sol ikSCsolver -sj $handIkJt -ee $hand02IkJt 
+		    -n ($side + "_hand02_ikh")`;
+		//parent iks and ctrls
+		parent $hand01Ikh[0] $armCt;
+		parent $hand02Ikh[0] $handCt;
+		parent $handCtGp $armCt;
+	}
+	select -cl;
+	
+	//setup Legs
+	//loop through each side
+	for ($side in $sides){
+		string $legJts[] = `ls -typ "joint" ($side + "_leg*")`;
+		int $legJtSize = `size($legJts)`;
+		string $ankleJt = $legJts[$legJtSize-3];//position for arm ct
+		select -r $ankleJt;
+		x_circleX();
+		//create ik ctrls
+		string $legCt = `rename ($side + "_leg_ct")`;
+		//flip right side scales for mvmnt mirroring 
+		if ($side == "r"){
+			setAttr ($legCt + ".s") -1 -1 -1;			
+			}
+		string $legCtGp = x_zeroGrp();
+		
+		//create pv ct
+		string $kneeJt = $legJts[1];
+		select -r $kneeJt;
+		x_circleZ();
+		string $kneePvCt = `rename ($side + "_knee_ct")`;
+		//flip right side scales for mvmnt mirroring
+		if ($side == "r"){
+			setAttr ($kneePvCt + ".s") -1 -1 -1;			
+			}
+		string $kneePvCtGp = x_zeroGrp();
+		
+		//create foot ct
+		string $footJt = $legJts[$legJtSize-2];//position for foot ct
+		select -r $footJt;
+		x_circleX();
+		string $footCt = `rename ($side + "_foot_ct")`;
+		string $footCtGp = x_zeroGrp();
+		
+		//create dups
+        select $legJts;       
+        x_ikFkBlend("global_ct", ($side + "_leg_ct"));
+        select -cl;
+        
+		//create leg ik handles		
+		string $legIkJts[] = `ls -type "joint" ($side + "_leg*" + "*_ik")`;
+		string $legIkItems[] = {$legIkJts[0],$legIkJts[3],$legCt,$kneePvCt};
+		select -r $legIkItems;
+		simpleIkh();
+		
+		//create foot ik handles
+		int $legIkJtSize = `size($legIkJts)`; 
+		string $ankleIkJt = $legIkJts[$legIkJtSize-3];//ankle ik jt
+		string $footIkJt = $legIkJts[$legIkJtSize-2];//foot ik jt
+		string $foot02IkJt = $legIkJts[$legIkJtSize-1];//foot end ik jt
+		//handles
+		string $foot01Ikh []= `ikHandle -sol ikSCsolver -sj $ankleIkJt -ee $footIkJt 
+		    -n ($side + "_foot01_ikh")`;
+		string $foot02Ikh []= `ikHandle -sol ikSCsolver -sj $footIkJt -ee $foot02IkJt 
+		    -n ($side + "_foot02_ikh")`;
+		
+		//create heel roll setup
+		//select -r $legCt $footCt;
+		//x_footSetup();
+		
+		//parent ikh and ctrls
+		//parent $foot01Ikh[0] $legCt;
+		//parent $foot02Ikh[0] $footCt;
+		parent $kneePvCtGp $legCt; 
+		
+		
+	}
+	
+	//create display layers
+	createDisplayLayer -name "c_ctrls_lyr" -number 1 -empty;
+	setAttr c_ctrls_lyr.color 17;
+
+	createDisplayLayer -name "l_ctrls_lyr" -number 2 -empty;
+	setAttr l_ctrls_lyr.color 13;
+
+	createDisplayLayer -name "r_ctrls_lyr" -number 3 -empty;
+	setAttr r_ctrls_lyr.color 6;
+}
+

@@ -1,0 +1,57 @@
+/*
+	--x_zeroGrp.mel--
+	Will zero out the selected object(s) translate
+	rotate and scale and create a parent group above
+	the selected object.
+	
+	Chance B. Dodd revised 10/6/11
+	----------------------
+	CBD revised 3/16/12 
+	    checked if object had a parent already and parented it back that object
+	    instead of the world. Still works for objects that are not parented.
+	----------------------
+*/
+
+global proc string x_zeroGrp()
+{
+	string $sel[] = `ls -sl`;
+	string $result;
+	//error checking
+	if (size($sel) == 0)
+		error "You must select at least 1 object!";
+	
+	//create a group for each obj selected
+	for ($obj in $sel)
+	{
+	    //get current parent and store it in a var
+	    string $parent[] = `listRelatives -p $obj`;
+	    //create an empty grp
+		string $null = `group -em`;
+		//parent the empty grp under the selected obj
+		parent $null $obj;
+		//set the attributes to default to move the empty grp to the selected object
+		setAttr ($null + ".t") 0 0 0;
+		setAttr ($null + ".r") 0 0 0;
+		setAttr ($null + ".s") 1 1 1;
+		//unparent the empty group and parent the object to the empty grp
+		//find out if object has a parent or is child of world
+		if (size ($parent) > 0)
+	    {
+	        //rename grp based on parent
+	        $result = `rename $null ($obj + "_gp#")`;
+	        parent $result $parent[0];//parent null to original obj parent
+	        parent $obj $result;//parent original obj to null
+	        
+	    }
+	    else
+	    {
+	        $result = `rename $null ($obj + "_gp#")`;
+	        parent -w $result;
+	        parent $obj $result;
+	        //rename the grp according to the objects name
+		    
+	    }
+		
+	}
+	return $result;
+}

@@ -1,0 +1,170 @@
+// This script creates a window for creating some nodes and
+// also lets you name them first.
+
+// button commands
+
+//setup arc length button
+global proc curveInfo() {
+	string $sel[] = `ls -sl`;
+		selectType -q $sel;
+		if (size ($sel) ==0){
+			error "no curve selected!";
+		}
+		
+			for ($obj in $sel)
+			arclen -ch 1;
+			select -addFirst curveInfo1 ;
+			string $arcName = `rename "curveInfo1" ($obj +"c")`;
+			$tmpArc = substituteAllString ($arcName,"crv","");
+			string $finName = `rename $arcName ($tmpArc + "rvInfo")`;
+			select -r $obj;
+		print ("Created curveInfo Node " + "'" + $finName + "'" + "\n");
+
+}
+//setup MultDiv
+global proc multDiv() {
+		string $newObj = `createNode multiplyDivide`; 
+		string $tfName = `textField -q -tx one`;
+		string $newName = `rename $newObj ($tfName + "_md")`;
+	print ("Created MultiplyDivide Node " + $newName + "\n");
+	textField -edit -enterCommand ("multDiv()") one;
+    // setup mltDiv operation
+      int $mltOpt = `optionMenuGrp -q -sl mltOpt`;
+      setAttr ($newName + ".operation") $mltOpt ;
+
+}
+
+
+//setup plusMinus
+global proc pma() {
+		string $newObj = `createNode plusMinusAverage`; 
+		string $tfName = `textField -q -tx two`;
+		string $newName = `rename $newObj ($tfName + "_pma")`;
+	print ("Created PlusMinus Node " + $newName + "\n");
+	textField -edit -enterCommand ("pma()") two;
+    // setup pma operation
+      int $pmaOpt = `optionMenuGrp -q -sl pmaOpt`;
+      setAttr ($newName + ".operation") $pmaOpt ;
+
+}
+
+//setup addDblLin
+global proc add() {
+		string $newObj = `createNode addDoubleLinear`; 
+		string $tfName = `textField -q -tx three`;
+		string $newName = `rename $newObj ($tfName + "_add")`;
+	print ("Created AddDouble Node " + $newName + "\n");
+	textField -edit -enterCommand ("add()") three;
+
+}
+
+//setup distance
+global proc dst() {
+		string $newObj = `createNode distanceBetween`; 
+		string $tfName = `textField -q -tx four`;
+		string $newName = `rename $newObj ($tfName + "_dst")`;
+	print ("Created DistanceBetween Node " + $newName + "\n");
+	textField -edit -enterCommand ("dst()") four;
+
+}
+
+//setup blend
+global proc bld() {
+		string $newObj = `createNode blendColors`; 
+		string $tfName = `textField -q -tx five`;
+		string $newName = `rename $newObj ($tfName + "_blnd")`;
+	print ("Created BlendColors Node " + $newName + "\n");
+	textField -edit -enterCommand ("bld()") five;
+
+}
+
+// create the window layout------------------------------------------
+
+global proc x_nodeGen (){
+
+if (`window -exists nodeGen`)
+    deleteUI nodeGen;
+
+// window for node generator
+
+	window
+	-resizeToFitChildren 1
+	-title "Node Generator"
+	-wh 200 250
+	-sizeable 1
+	nodeGen;
+
+// define main layout
+
+rowColumnLayout -numberOfColumns 5 
+			-cw 1 100 -cw 2 5 -cw 3 100 -cw 4 5 -cw 5 100 mainWin;
+            
+//buttons and textFields
+
+text -l "        Node"  -font "boldLabelFont" Node ;
+separator -horizontal false;
+text -l "     Operation"  -font "boldLabelFont" Name ;
+separator -horizontal false;
+text -l "        Name"  -font "boldLabelFont" Operation ;
+
+separator -height 10;
+separator -horizontal false ;
+separator;
+separator -horizontal false ;
+separator;
+
+button -label "arcLength" -c "curveInfo()" ;
+separator -horizontal false;
+text "    Select the curve" ;
+separator -horizontal false;
+text "       Auto Named" ;
+
+button -label "multDiv" -c "multDiv()" ;
+separator -horizontal false;
+optionMenuGrp -columnAttach 1 "both" 15 mltOpt ;
+    menuItem -label "Multiply";
+    menuItem -label "Divide";
+    menuItem -label "Power";
+separator -horizontal false;
+textField one ;
+
+button -label "plusMinus" -c "pma()" ;
+separator -horizontal false;
+optionMenuGrp -columnAttach 1 "both" 15 pmaOpt ;
+    menuItem -label "Add";
+    menuItem -label "Subtract";
+    menuItem -label "Average";
+separator -horizontal false;
+textField two ;
+    
+button -label "addDblLin" -c "add()" ;
+separator -horizontal false;
+text "     No Operation" ;
+separator -horizontal false;
+textField three ;
+
+button -label "distance" -c "dst()" ;
+separator -horizontal false;
+text "     No Operation" ;
+separator -horizontal false;
+textField four ;
+
+button -label "blend" -c "bld()" ;
+separator -horizontal false;
+text "     No Operation" ;
+separator -horizontal false;
+textField five ;
+
+separator -h 10;
+separator;
+separator;
+separator;
+separator;
+
+// show the window
+
+showWindow nodeGen ;
+
+}
+
+print "Window Created!\n" ;

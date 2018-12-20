@@ -1,0 +1,134 @@
+//window for rigging tools
+
+global proc x_riggingUI(){
+	source x_loadObjIntoTFBG.mel;
+	source x_ikFkBlend.mel;
+	source x_ikhLib.mel;
+	source x_nodeGen.mel;
+	source x_blendAttrsUI.mel;
+	source x_eyeSetup.mel;
+	source x_mirrorCtrls.mel;
+	source x_tailSetup.mel;
+	
+	string $win = "x_riggingUI";
+
+
+	if (`window -ex $win` != true){
+		//deleteUI $win;	
+		
+	window 
+		-title "Rigging Tools"
+		-resizeToFitChildren 1
+		-sizeable 1
+		$win;
+		
+	//layout
+	
+	scrollLayout -cr true scrollLayout;
+	columnLayout -adj 1;
+	flowLayout -columnSpacing 10 -h 60 -wr true -bgc .2 .2 .2;
+	
+	string $constCt= `iconTextButton -style "iconAndTextVertical"
+	-bgc 0 0 0 -image1 "parentConstraint.png" -label "Con Ctrl" 
+	-c "source x_constCt.mel; x_constCt();"`; 
+	
+	string $cirX = `iconTextButton -style "iconAndTextVertical" 
+	-bgc .8 .4 .4 -image1 "circle.png" -label "Circle X" 
+	-c "source x_circleX.mel; x_circleX();"`; 
+	
+	string $cirZ = `iconTextButton -style "iconAndTextVertical" 
+	-bgc .4 .4 .8 -image1 "circle.png" -label "Circle Z" 
+	-c "source x_circleZ.mel; x_circleZ();"`;
+    
+    string $FkX = `iconTextButton -style "iconAndTextVertical"
+	-bgc .3 0 0 -image1 "commandButton.png" -label "Fk X" 
+	-c "source x_fkCtrl.mel; x_fkCtrl (\"x\")"`;
+	
+	string $FkZ= `iconTextButton -style "iconAndTextVertical"
+	-bgc 0 0 .3 -image1 "commandButton.png" -label "Fk Z" 
+	-c "source x_fkCtrl.mel; x_fkCtrl (\"z\")"`; 
+	
+	string $zeroGp= `iconTextButton -style "iconAndTextVertical"
+	-bgc .3 .3 .3 -image1 "group.png" -label "Zero Gp" 
+	-c "source x_zeroGrp.mel; x_zeroGrp;"`; 
+	
+
+	setParent ..;
+	
+		text -l "\nDuplicates joints and creates constraints\non original joint chain, select joints to duplicate\n";		
+		textFieldButtonGrp 
+			-l "switch ctrl:"
+			-bl "load selected"
+			-adj 2
+			-cw3 70 100 1
+			tfbgOne;
+		text -l " ";
+		textFieldButtonGrp 
+			-l "Ik ctrl:"
+			-bl "load selected"
+			-adj 2
+			-cw3 70 100 1
+			tfbgTwo;
+		text -l " ";
+		string $ikFkBlend = `button -l "IK/FK Joint Setup" -c "localIkFkBlend"`;
+		text -l " ";
+		separator;
+		
+		text -l "\nSelect first/last joints, IK ctrl, pv ctrl (elbow,knee)\n";
+		string $simpleIkh = `button -l "Simple Ikh" -c "source x_ikhLib.mel;simpleIkh();"`;
+		text -l " ";
+		separator;
+		
+		text -l "\nCreates locators and custom attr to roll from heel to toe\nMust have ik handle already created\nSelect ik ctrl, and toe rot ctrl\n";
+		string $footSetup = `button -l "Foot Setup" -c "source x_footSetup.mel;x_footSetup();"`;
+		text -l " ";
+		separator;	
+		
+		text -l "\nCreates fk style controls on a joint chain \n(i.e. tail/tongue). Must select joints first\n";
+		string $fkJntChn= `button -l "Fk Joint Chain Setup" -c "source x_tailSetup.mel;x_tailSetup;"`;
+		text -l " ";
+		separator;
+		
+		text -l "\nCreates aim const on eye joint\nSelect eye ct, eye joint, head ct\n";
+		string $eyeSetup = `button -l "Eye Setup" -c "source x_eyeSetup.mel;x_eyeSetup();"`;
+		text -l " ";
+		separator;
+		
+		text -l "\nSelect the left control curve to mirror over to the right\nOnly works for left to right mirrors\n";
+		string $mirrorCt = `button -l "Mirror Ctrls" -c "source x_mirrorCtrls.mel;x_mirrorCtrls;"`;
+		text -l " ";
+		separator;
+		
+		/*
+		text -l "\nOpens node generator UI for creating different nodes\n";
+		string $nodesUI = `button -l "Create Nodes" -c "x_nodeGen();"`;
+		text -l " ";
+		separator;
+		text -l "\nOpens blend Attr UI, creates blend for IK/FK\nusing blend colors nodes\n";
+		string $blendUI = `button -l "Blend UI" -c "x_blendAttrsUI();"`;
+		text -l " ";
+		separator;
+		*/
+		
+		//Ik Fk blend fields
+		textFieldButtonGrp -e -bc "loadObjIntoTFBG tfbgOne" tfbgOne;
+
+		textFieldButtonGrp -e -bc "loadObjIntoTFBG tfbgTwo" tfbgTwo;
+				
+		showWindow $win;
+	} else	// else just pop it up from being minimized again
+    	{
+		showWindow $win;
+	}
+	
+	print "Rigging UI up!\n";
+
+}
+
+global proc localIkFkBlend ()
+	{
+		string $switchCt = `textFieldButtonGrp -q -tx tfbgOne`;
+		string $ctrl = `textFieldButtonGrp -q -tx tfbgTwo`;
+		
+		x_ikFkBlend($switchCt, $ctrl);
+	}

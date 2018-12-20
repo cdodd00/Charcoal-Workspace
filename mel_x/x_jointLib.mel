@@ -1,0 +1,58 @@
+/*
+	--X_jointLib.mel--
+	short script to hide the radius attr on given joints
+	
+	based on Solsona's script
+	
+	Chance B. Dodd 10/9/11
+	
+	added length SDK on 10/22/11
+*/
+
+// hideJointRadius
+// hides the radius attr on joints
+//////////////
+
+global proc hideJointRadius()
+{
+	string $allJoints[] = `ls -type joint`;
+	for ($joint in $allJoints)
+	{
+		setAttr -cb off ($joint + ".radius");
+	}
+}
+
+// stretchJoint
+// creates a length/stretch attr on given object and uses
+// driver driven to lengthen the target object
+// using the translate x channel. Mostly used for FK joints
+//////////////
+
+global proc stretchJoint(string $joints[])
+{
+	source x_relativesLib.mel;
+	
+	for ($jt in $joints)
+	{
+		//add the driver attr
+		addAttr -ln "stretch" -k 1 -at double -dv 1 -min 0 $jt;
+		
+		//get the child of the parent object for translating x
+		string $child[] = returnChild($jt);
+		float $childLength = `getAttr ($child[0] + ".tx")`;
+		
+		//start the driver drivens
+		setDrivenKeyframe -dv 1 -v $childLength -cd ($jt + ".stretch") ($child[0] + ".tx");
+		//multiply the dv and the v by 2
+		setDrivenKeyframe -dv 2 -v ($childLength * 2) -cd ($jt + ".stretch") ($child[0] + ".tx");
+		setDrivenKeyframe -dv 0 -v 0 -cd ($jt + ".stretch") ($child[0] + ".tx");
+		
+		//set anim curve pre and post infinity to linear
+		selectKey -k ($child[0] + "_translateX");
+		keyTangent -e -itt "linear" -ott "linear" ($child[0] + "_translateX");
+		setInfinity -poi linear;
+		
+	}
+	
+	
+}

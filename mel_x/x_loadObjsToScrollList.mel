@@ -1,0 +1,19 @@
+//proc to load selected objects into a scroll list
+global proc x_loadObjsToScrollList (string $tsl)
+{
+	string $selObj[] =`ls -sl`;
+	textScrollList -e -ra $tsl;
+	
+	if (`size ($selObj)` > 0)
+	{
+		for ($obj in $selObj)
+		{
+			textScrollList -e -a $obj $tsl;
+			print ($obj + " loaded\n");
+		}
+	}
+	else
+	{
+		error "Select Objects To Load\n";
+	}
+}

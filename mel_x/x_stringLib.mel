@@ -1,0 +1,126 @@
+/*
+	--x_stringLib.mel--
+	Library to find names of objects
+	
+	based on Solsona's script
+	
+	Chance B. Dodd 10/05/11
+	
+	Names of objects are assumed to be (side)_(name)_(type) Ex: l_foot_ct 
+	
+	added returnSection 11/04/11
+	
+*/
+
+
+// nameSpace will return namespace of a given node
+// namespaces are the first name separated by a ":"
+// Ex: Rig01:l_foot_ct returns Rig01
+////////////////
+
+global proc string nameSpace(string $theObject)
+{
+	string $buffer[];
+	tokenize $theObject ":" $buffer;
+	
+	return $buffer[0];	
+}
+
+// ignoreNameSpace
+// remove the namespace and return the name of the object
+// Ex: Rig01:l_foot_ct returns l_foot_ct.
+/////////////////
+
+global proc string ignoreNameSpace(string $theObject)
+{
+	string $buffer[];
+	tokenize $theObject ":" $buffer;
+	
+	if (`size $buffer` == 2)
+			return $buffer[1];
+	else
+			return $buffer[0];
+}
+
+// returnSide
+// returns the side of the given object 
+// Ex:l_foot_ct returns l 
+/////////////////
+
+global proc string returnSide(string $theObject)
+{
+	string $buffer[];
+	int $bufferSize = `tokenize $theObject "_" $buffer`;
+	
+	return $buffer[0];
+}
+
+// returnObjName
+// returns the name of the object
+// Ex: l_foot_ct returns foot
+//////////////////
+
+global proc string returnObjName(string $theObject)
+{
+	string $buffer[];
+	int $bufferSize = `tokenize $theObject "_" $buffer`;
+	
+	//subtract from number of items in array to get to the name
+	$bufferSize -= 2;
+	
+	//if object doesn't have enough names set bufferSize to 0
+	if ($bufferSize < 0)
+			$bufferSize = 0;
+	
+	return $buffer[$bufferSize];
+		
+}
+
+// returnSuffix
+// Returns what type of node it is named
+// Ex: l_foot_ct returns ct
+//////////////////
+
+global proc string returnSuffix(string $theObject)
+{
+	string $buffer[];
+	int $bufferSize = `tokenize $theObject "_" $buffer`;
+	
+	//subtract from number of items in array to get to the suffix
+	$bufferSize -= 1;
+	
+	//if object doesn't have enough names set bufferSize to 0
+	if ($bufferSize < 0)
+			$bufferSize = 0;
+	
+	return $buffer[$bufferSize];
+}
+
+// returnSection
+// returns the given section of a given object
+///////////////////
+
+global proc string returnSection(string $theObject, int $section)
+{
+	string $buffer[];
+	int $bufferSize = `tokenize $theObject "_" $buffer`;
+	
+	$bufferSize -= $section;
+	
+	//if object doesn't have enough names set bufferSize to 0
+	if ($bufferSize < 0)
+			$bufferSize = 0;
+	
+	return $buffer[$bufferSize];
+}
+
+
+
+
+
+
+
+
+
+
+

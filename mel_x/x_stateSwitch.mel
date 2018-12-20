@@ -1,0 +1,47 @@
+/*
+	--x_stateSwitch.mel--
+	
+	Based on method from Planet Cazmo Proj.
+	
+	Chance B. Dodd - 6/13/2012
+	
+	Desc: Creates a "switch" to control visibility of different "states" of objects
+	for 2D characters in 3D.
+	Example: Multiple hands (open, close), feet (front,side)
+	
+	Use: Select a ctrl (preferably NURBS) and the object to connect into the visibility...
+		 run the script passing in the name of the attribute to connect into the condition node
+		 as well as the enum index value of the current attribute you are hooking up.
+		 
+	Example:(x_stateSwitch ("handState", 0); 0 is the first enum in the handstate attribute.
+	
+*/
+
+global proc x_stateSwitch (string $attr, int $num)
+{
+
+	//Get the selected ctrl
+	string $sel[] = `ls -sl`;
+	
+	//error check
+	if (size ($sel) == 0) 
+	error("Please select the nurbs control with state attr and object to connect it too!!");
+		
+	//create the condition node
+	string $con = `shadingNode -au "condition" -n ($sel[0] + "_state" + $num + "_cond")`;
+	
+	//connect state into first term on cond
+	connectAttr -f ($sel[0] + "." + $attr) ($con + ".firstTerm");
+	
+	//set color if true to 1 and false to 0
+	setAttr ($con + ".colorIfTrueR") 1;
+	setAttr ($con + ".colorIfFalseR") 0;
+	
+	//set second term to $num value
+	setAttr ($con + ".secondTerm") $num;
+	
+	//connect cond into second selected object visibility
+	connectAttr -f ($con + ".outColorR") ($sel[1] + ".v");
+	
+}
+

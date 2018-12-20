@@ -1,0 +1,134 @@
+/*
+	--x_controllerLib.mel--
+	library to build different controllers for rigging
+	Using empty groups as controls
+	
+	based on Solsona's script
+
+	Chance B. Dodd 10/05/11
+	
+	revised 10/10/11 - added parentShape proc
+
+*/
+
+// nullCtrl
+// creates basic ctrl w/ zero group above it
+/////////////////
+
+global proc string nullCtrl(string $name)
+{
+	string $parent = `createNode transform -n ($name + "CT_gp")`;	
+	string $ctrl = `createNode transform -n ($name + "_ct")`;	
+	
+	parent $ctrl $parent;
+	
+	return $ctrl;
+}
+
+// nullCtrlAtSelection
+// builds a null ctrl and places it at the selected obj
+///////////////
+
+global proc string nullCtrlAtSelection(string $name)
+{
+	source x_alignLib.mel;
+
+	string $sel[] = `ls -sl`;
+
+	string $ctrl = nullCtrl($name);
+	
+	alignTrans($sel[0],($name + "CT_gp"));
+	
+	return $ctrl;
+	
+}
+
+// nullCtrlZeroPos
+// creates ctrl and zero grp aligns transforms to given $location
+//////////////
+
+global proc string nullCtrlZeroPos(string $location, string $name)
+{
+	source x_alignLib.mel;	
+	
+	string $ctrl = nullCtrl($name);
+	alignTrans($location, ($name + "CT_gp"));
+
+	return $ctrl;	
+}
+
+// nullCtrlZeroRot
+// creates ctrl and zero grp aligns rotations to given $location
+//////////////
+
+
+global proc string nullCtrlZeroRot(string $location, string $name)
+{
+	source x_alignLib.mel;
+	
+	string $ctrl = nullCtrl($name);
+	alignRot($location, ($name + "CT_gp"));
+
+	return $ctrl;	
+}
+
+// nullCtrlZeroPosRot
+// creates ctlr and zero grp aligns rot and trans places it at $location
+/////////////////
+
+global proc string nullCtrlZeroPosRot(string $location, string $name)
+{
+	source x_alignLib.mel;
+
+	string $ctrl = nullCtrl($name);
+	alignTrans($location, ($name + "CT_gp"));
+	alignRot($location, ($name + "CT_gp"));
+	
+	return $ctrl;
+	
+}
+
+// nullParent
+// create a zero parent group
+///////////////////
+
+global proc string nullParent(string $object)
+{
+	source x_alignLib.mel;
+	source x_stringLib.mel;
+	
+	string $parentGp = `group -em`;
+	alignTrans ($object, $parentGp);
+	alignRot ($object, $parentGp);
+	//get name
+	string $side = returnSide ($object);
+	string $name = returnObjName($object);
+	
+	parent $object $parentGp;
+	$parentGp = `rename $parentGp ($side + "_" + $name + "CT_gp")`;
+	
+	return $parentGp;
+
+}
+
+
+// parentShape
+// parents the shape node to the given node
+//////////////////
+
+global proc parentShape(string $shape, string $obj)
+{
+	parent -r -s $shape $obj;
+}
+
+
+
+
+
+
+
+
+
+
+
+

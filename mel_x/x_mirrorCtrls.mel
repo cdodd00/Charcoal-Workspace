@@ -1,0 +1,28 @@
+global proc x_mirrorCtrls()
+{
+	source x_stringLib.mel;
+	source x_zeroGrp.mel;
+	
+	string $ctrls[] = `ls -sl`;
+	string $name;
+	string $grp;
+	
+	for ($ct in $ctrls){
+		
+		$name = returnObjName($ct);
+		
+		string $rCt[] = `duplicate -rr -un -n ("r_" + $name + "_ct") $ct`;
+		
+		parent -w $rCt[0];
+		$grp = `group -em`;
+		parent $rCt[0] $grp;
+		setAttr ($grp + ".sx") -1;
+		parent -w $rCt[0];
+		delete $grp;
+		select $rCt[0];
+		x_zeroGrp;
+		
+	}
+	
+	
+}

@@ -1,0 +1,13 @@
+//proc to load selected objects into text field
+global proc x_loadTextField (string $tf)
+{
+	string $selObj[] = `ls -sl`;
+	if (size ($selObj) > 0)
+	{
+		textField -e -tx $selObj $tf;
+	}
+	else
+	{
+		error "Select An Object To Load\n";
+	}	
+}

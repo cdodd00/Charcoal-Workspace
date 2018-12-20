@@ -1,0 +1,14 @@
+//proc to load object into a text field button grp
+global proc x_loadObjIntoTFBG (string $tfbg)
+{
+	string $selObj[] = `ls -sl`;
+	if (size ($selObj) > 0)
+	{
+		textFieldButtonGrp -e -tx $selObj[0] $tfbg;
+		print ($selObj[0] + " loaded \n");
+	}
+	else 
+	{
+		error "Select an object to load\n";
+	}
+}

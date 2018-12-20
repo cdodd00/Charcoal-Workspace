@@ -1,0 +1,92 @@
+/* 
+	Creates ik/fk setup with parent constraints
+	Needs to have all of the joints selected in order to duplicate them.
+*/
+	
+global proc x_ikFkBlend (string $switchCt, string $ctrl){
+
+	source x_ikhLib.mel;
+	source x_stringLib.mel;
+	source x_relativesLib.mel;
+	source x_fkCtrl.mel;
+	source x_attrsLib.mel;
+	
+	//create vars for joints and nodes
+	string $joints[] = `ls -sl`;
+	string $ikJoints[];
+	string $fkJoints[];
+	string $rev;
+	string $ctName = returnObjName($ctrl);
+
+	//get the side of the joint
+	string $side = returnSide($joints[0]);
+
+	//add custom attr to switch node
+	addAttr -ln ($side + "_" + $ctName + "IkFkBlend") -at double -k 1 -min 0 -max 1 -dv 1 $switchCt;
+
+	//create a reverse node and hook the leg switch to the input x
+	$rev = `createNode reverse -n ($side + $ctName + "_rev")`;
+	connectAttr ($switchCt + "." + $side + "_" + $ctName + "IkFkBlend") ($rev + ".inputX");
+	
+	//duplicate the leg joints
+	int $i=0;
+	for ($joint in $joints)
+	{
+		//get side
+		string $side = returnSide($joint);
+		string $name = returnObjName($joint);
+
+		//duplicate joints for ik
+		string $temp[] = `duplicate -n ($side + "_" + $name + "_ik") ($joint)`;
+		$ikJoints[$i] = $temp[0];
+		deleteChildren($ikJoints[$i]);
+
+		//duplicate joints for fk
+		string $temp[] = `duplicate -n ($side + "_" + $name + "_ct") ($joint)`;
+		$fkJoints[$i] = $temp[0];
+		deleteChildren($fkJoints[$i]);
+
+		//parent the new joints
+		if ($i>0)
+		{
+			parent $ikJoints[$i] $ikJoints[$i - 1];
+			parent $fkJoints[$i] $fkJoints[$i - 1];
+		}
+
+		//parent constrain the original "jt" to the "ik" and "fk" chains
+		//ik is first
+		string $parCon[] = `parentConstraint $ikJoints[$i] $fkJoints[$i] $joints[$i]`;
+
+		//hookup the switch blend attr to the constraint weight
+		connectAttr ($switchCt + "." + $side + "_" + $ctName + "IkFkBlend") ($parCon[0] + "." + $ikJoints[$i] + "W0");
+		connectAttr ($rev + ".outputX") ($parCon[0] + "." + $fkJoints[$i] + "W1");
+
+		$i++;
+	}
+	int $numFkJnts = `size $fkJoints`;
+	
+	//create fk ctrls
+	for ($i=0; $i<$numFkJnts - 1; $i++){
+	
+		select $fkJoints[$i];
+		x_fkCtrl ("x");
+		
+		
+	}
+	
+
+	// connect the leg switch to the visibilty of fk joints and ik ctrl
+	connectAttr ($rev + ".outputX") ($fkJoints[0] + ".v");
+	connectAttr ($switchCt + "." + $side + "_" + $ctName + "IkFkBlend") ($ctrl + ".v");
+	
+	for ($i=0; $i<$numFkJnts; $i++){
+	
+		lockHideAttrs($fkJoints[$i],{"t","s","v"});
+		setAttr -cb off ($fkJoints[$i] + ".radius");
+	}
+	
+	//hide IK joints
+	setAttr ($ikJoints[0] + ".v") 0;
+
+
+}

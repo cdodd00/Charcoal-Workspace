@@ -1,0 +1,26 @@
+/*
+	creates a nurbs crv and parent constrains the joint to it.
+*/
+
+global proc x_constCt(){
+	
+	source x_alignLib.mel;
+	
+	string $sel[] = `ls -sl`;
+	
+	for ($obj in $sel){
+		   
+		string $ct[] = `circle -c 0 0 0 -nr 1 0 0 -sw 360 -r 2 -d 1 -ut 0 -tol 0.01 -s 8 -ch 1 -n ($obj + "_ct")`;
+		
+		alignTrans ($obj, $ct[0]);		
+		alignRot ($obj, $ct[0]);
+		
+		parentConstraint $ct[0] $obj;
+		
+		searchReplaceNames "_jt" "" "selected";
+		
+		x_zeroGrp;
+		
+	}
+	
+}

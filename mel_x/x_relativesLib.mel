@@ -1,0 +1,86 @@
+/*
+	--x_relativesLib.mel--
+	Library to find children and parent objects
+	
+	based on Solsona's script
+	
+	Chance B. Dodd 10/05/11
+	
+	added returnShape 6/18/18
+
+*/
+
+
+// returnChild
+// returns children on give obj
+////////////////
+
+global proc string[] returnChild(string $theParent)
+{
+	string $theChildren[] = `listRelatives -children $theParent`;
+	return $theChildren;
+}
+
+// returnParent
+// returns the immediate parent of the selected obj
+///////////////
+
+global proc string returnParent(string $theObject)
+{
+	string $theParent[] = `listRelatives -parent $theObject`;
+	return $theParent[0];
+}
+
+// returnFullParent
+// returns the immediate parent of the selected obj
+// same as above but with full path
+////////////////
+
+global proc string returnFullParent(string $theObject)
+{
+	string $theParent[] = `listRelatives -parent -fullPath $theObject`;
+	return $theParent[0];
+}
+
+// deleteChild
+// deletes all children of give obj
+/////////////////
+
+global proc deleteChildren(string $theObject)
+{
+	string $allChildren[] = `listRelatives -allDescendents -fullPath $theObject`;
+	if (`size $allChildren`)
+	{
+		delete $allChildren;		
+	}
+}
+
+// returnTopParent
+// returns the top most object in the hierarchy
+//////////////
+
+global proc string returnTopParent(string $theObject)
+{
+	//get the top node
+	string $theParent = returnFullParent($theObject);
+	if ($theParent == "")
+	{
+		//simply set the object as the parent
+		$theParent = $theObject;		
+	}
+	else
+	{
+		//Keep running until reach the top
+		$theParent = returnFullParent($theObject);
+	}
+	return $theParent;
+}
+//returnShape
+//returns the shape node of the selected object
+
+global proc string returnShape(string $theObject)
+{
+	string $theShape[] = `listRelatives -shapes $theObject`;
+	return $theShape[0];
+	
+}

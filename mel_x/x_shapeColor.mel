@@ -1,0 +1,39 @@
+/*
+	--x_shapeColor.mel--
+	
+	Overrride color of the shape node
+	
+	Used to change nurbs curve color of the shape node
+	
+	Chance B. Dodd 8/12/17
+	
+	Use: select the object and run.
+	Example: x_shapeColor (6); - Makes the shape blue
+	
+	Blue = 6
+	Red = 13
+	Yellow = 17
+	Light Brown = 10
+	Fuscia = 9
+	Purple = 30
+*/
+
+global proc x_shapeColor(int $col)
+{
+	source x_relativesLib.mel;
+	
+	string $sel[] = `ls -sl`;
+	int $col;
+	string $shape[];
+	
+
+	for ($obj in $sel) {
+	
+		//get the shape node
+		$shape[0] = returnShape($obj);
+		
+		setAttr ($shape[0] + ".overrideEnabled") 1;
+		setAttr ($shape[0] + ".overrideColor") $col;
+		
+	}
+}

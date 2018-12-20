@@ -1,0 +1,31 @@
+/*
+	--x_mnky_dupBlend.mel--
+	
+	used to duplicate blendshapes from a hi poly mesh to lo poly mesh
+	
+	pass in master blendshape node name and the name of the head to be duplicated.
+	
+	Must have wrap deformer already created between original head and new head
+	
+	example: x_mnky_dupBlend("headShapes","Head_MeshNew")
+
+*/
+
+global proc x_mnky_dupBlend (string $oldHeadBlend, string $head)
+{
+	string $oldHeads[] = `blendShape -q -t $oldHeadBlend`;
+
+	//go through all head targets and duplicate on low res head
+	
+	for ($each in $oldHeads)
+	{
+		//blendshape value to 1 and dup it.
+		setAttr ($oldHeadBlend + "." + $each) 1;
+		string $newHead[] = `duplicate $head`;
+		$newHead[0] = `rename $newHead[0] ($each + "_new")`;
+		
+		//set value back to 0
+		setAttr ($oldHeadBlend + "." + $each) 0;
+	}
+
+}

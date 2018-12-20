@@ -1,0 +1,245 @@
+/*
+	--x_spaceSwitch.mel--
+	
+	sets up different parents for the given ctrl
+	
+	Chance B. Dodd - 10/28/11
+	
+	To use: must pass in the control that will carry the switching attr.
+	Pass in the object/ctrl, the switching attr name, names of the spaces,
+	a 1 for parent constraint and 2 for orient constraint
+	
+	//
+	updated 10/27/2014 - added "source x_stringLib.mel" since it was using 
+	the "returnobjname" function
+	//
+
+*/
+
+global proc x_spaceSwitch(string $switch, string $object, string $attrName, string $objSpaces[], int $type )
+{
+	source x_alignLib.mel;
+	source x_stringLib.mel;
+	
+	//create the main loc at the given object
+	string $objLoc[] = `spaceLocator -n($object + "_loc")`;
+	string $spaces[];
+	int $size = `size ($objSpaces)`;
+	
+	switch ($size)
+	{
+		case 4:
+		
+		addAttr -ln $attrName -k 1 -at enum -en ($objSpaces[0] + ":" + $objSpaces[1] + ":" + $objSpaces[2] + ":" + $objSpaces[3]) $switch;
+		
+		//align the loc to the object
+		constPos ($object,$objLoc[0],0);
+	
+		//duplicate original loc
+		for($i=0;$i<$size;$i++)
+		{
+			string $tempLoc[] = `duplicate $objLoc[0]`;
+			$spaces[$i] = $tempLoc[0];
+		}
+		
+		string $name = returnObjName ($object);
+		string $side = returnSide ($object);
+		
+		//rename new locators
+		for ($i=0;$i<$size;$i++)
+		{
+			$spaces[$i] = `rename $spaces[$i] ($side + "_" + $name + "_" + $objSpaces[$i] + "Space")`;
+		}
+		
+		//parent ctrl and locs
+		parent $object $objLoc[0] ;
+		
+		for ($i=0;$i<$size;$i++)
+		{
+			parent $spaces[$i] ("c_" + $objSpaces[$i] + "_ct");
+		}
+		
+		//constrain main loc to other locs
+	
+		if ($type == 1)
+		{
+			string $const[] = `parentConstraint $spaces[0] $spaces[1] $spaces[2] $spaces[3] $objLoc[0]`;
+			//create driver drivens
+			//neck
+			setDrivenKeyframe -dv 0 -v 1 -cd ($switch + "." + $attrName) ($const[0] + "." + $spaces[0] + "W0");
+			setDrivenKeyframe -dv 0 -v 0 -cd ($switch + "." + $attrName) ($const[0] + "." + $spaces[1] + "W1");
+			setDrivenKeyframe -dv 0 -v 0 -cd ($switch + "." + $attrName) ($const[0] + "." + $spaces[2] + "W2");
+			setDrivenKeyframe -dv 0 -v 0 -cd ($switch + "." + $attrName) ($const[0] + "." + $spaces[3] + "W3");
+			//torso
+			setDrivenKeyframe -dv 1 -v 0 -cd ($switch + "." + $attrName) ($const[0] + "." + $spaces[0] + "W0");
+			setDrivenKeyframe -dv 1 -v 1 -cd ($switch + "." + $attrName) ($const[0] + "." + $spaces[1] + "W1");
+			setDrivenKeyframe -dv 1 -v 0 -cd ($switch + "." + $attrName) ($const[0] + "." + $spaces[2] + "W2");
+			setDrivenKeyframe -dv 1 -v 0 -cd ($switch + "." + $attrName) ($const[0] + "." + $spaces[3] + "W3");
+			//body
+			setDrivenKeyframe -dv 2 -v 0 -cd ($switch + "." + $attrName) ($const[0] + "." + $spaces[0] + "W0");
+			setDrivenKeyframe -dv 2 -v 0 -cd ($switch + "." + $attrName) ($const[0] + "." + $spaces[1] + "W1");
+			setDrivenKeyframe -dv 2 -v 1 -cd ($switch + "." + $attrName) ($const[0] + "." + $spaces[2] + "W2");
+			setDrivenKeyframe -dv 2 -v 0 -cd ($switch + "." + $attrName) ($const[0] + "." + $spaces[3] + "W3");
+			//global
+			setDrivenKeyframe -dv 3 -v 0 -cd ($switch + "." + $attrName) ($const[0] + "." + $spaces[0] + "W0");
+			setDrivenKeyframe -dv 3 -v 0 -cd ($switch + "." + $attrName) ($const[0] + "." + $spaces[1] + "W1");
+			setDrivenKeyframe -dv 3 -v 0 -cd ($switch + "." + $attrName) ($const[0] + "." + $spaces[2] + "W2");
+			setDrivenKeyframe -dv 3 -v 1 -cd ($switch + "." + $attrName) ($const[0] + "." + $spaces[3] + "W3");
+		}
+		else if ($type == 2)
+		{
+			string $const[] = `orientConstraint $spaces[0] $spaces[1] $spaces[2] $spaces[3] $objLoc[0]`;
+			//create driver drivens
+			//neck
+			setDrivenKeyframe -dv 0 -v 1 -cd ($switch + "." + $attrName) ($const[0] + "." + $spaces[0] + "W0");
+			setDrivenKeyframe -dv 0 -v 0 -cd ($switch + "." + $attrName) ($const[0] + "." + $spaces[1] + "W1");
+			setDrivenKeyframe -dv 0 -v 0 -cd ($switch + "." + $attrName) ($const[0] + "." + $spaces[2] + "W2");
+			setDrivenKeyframe -dv 0 -v 0 -cd ($switch + "." + $attrName) ($const[0] + "." + $spaces[3] + "W3");
+			//torso
+			setDrivenKeyframe -dv 1 -v 0 -cd ($switch + "." + $attrName) ($const[0] + "." + $spaces[0] + "W0");
+			setDrivenKeyframe -dv 1 -v 1 -cd ($switch + "." + $attrName) ($const[0] + "." + $spaces[1] + "W1");
+			setDrivenKeyframe -dv 1 -v 0 -cd ($switch + "." + $attrName) ($const[0] + "." + $spaces[2] + "W2");
+			setDrivenKeyframe -dv 1 -v 0 -cd ($switch + "." + $attrName) ($const[0] + "." + $spaces[3] + "W3");
+			//body
+			setDrivenKeyframe -dv 2 -v 0 -cd ($switch + "." + $attrName) ($const[0] + "." + $spaces[0] + "W0");
+			setDrivenKeyframe -dv 2 -v 0 -cd ($switch + "." + $attrName) ($const[0] + "." + $spaces[1] + "W1");
+			setDrivenKeyframe -dv 2 -v 1 -cd ($switch + "." + $attrName) ($const[0] + "." + $spaces[2] + "W2");
+			setDrivenKeyframe -dv 2 -v 0 -cd ($switch + "." + $attrName) ($const[0] + "." + $spaces[3] + "W3");
+			//global
+			setDrivenKeyframe -dv 3 -v 0 -cd ($switch + "." + $attrName) ($const[0] + "." + $spaces[0] + "W0");
+			setDrivenKeyframe -dv 3 -v 0 -cd ($switch + "." + $attrName) ($const[0] + "." + $spaces[1] + "W1");
+			setDrivenKeyframe -dv 3 -v 0 -cd ($switch + "." + $attrName) ($const[0] + "." + $spaces[2] + "W2");
+			setDrivenKeyframe -dv 3 -v 1 -cd ($switch + "." + $attrName) ($const[0] + "." + $spaces[3] + "W3");
+		}
+
+		break;
+	 case 3:
+		
+		addAttr -ln $attrName -k 1 -at enum -en ($objSpaces[0] + ":" + $objSpaces[1] + ":" + $objSpaces[2]) $switch;
+		
+		//align the loc to the object
+		constPos ($object,$objLoc[0],0);
+	
+		//duplicate original loc
+		for($i=0;$i<$size;$i++)
+		{
+			string $tempLoc[] = `duplicate $objLoc[0]`;
+			$spaces[$i] = $tempLoc[0];
+		}
+		
+		string $name = returnObjName ($object);
+		string $side = returnSide ($object);
+		
+		//rename new locators
+		for ($i=0;$i<$size;$i++)
+		{
+			$spaces[$i] = `rename $spaces[$i] ($side + "_" + $name + "_" + $objSpaces[$i] + "Space")`;
+		}
+		
+		//parent ctrl and locs
+		parent $object $objLoc[0] ;
+		
+		for ($i=0;$i<$size;$i++)
+		{
+			parent $spaces[$i] ("c_" + $objSpaces[$i] + "_ct");
+		}
+		
+		if ($type == 1)
+		{
+			string $const[] = `parentConstraint $spaces[0] $spaces[1] $spaces[2] $objLoc[0]`;
+			//create driver drivens
+			//torso
+			setDrivenKeyframe -dv 0 -v 1 -cd ($switch + "." + $attrName) ($const[0] + "." + $spaces[0] + "W0");
+			setDrivenKeyframe -dv 0 -v 0 -cd ($switch + "." + $attrName) ($const[0] + "." + $spaces[1] + "W1");
+			setDrivenKeyframe -dv 0 -v 0 -cd ($switch + "." + $attrName) ($const[0] + "." + $spaces[2] + "W2");
+
+			//body
+			setDrivenKeyframe -dv 1 -v 0 -cd ($switch + "." + $attrName) ($const[0] + "." + $spaces[0] + "W0");
+			setDrivenKeyframe -dv 1 -v 1 -cd ($switch + "." + $attrName) ($const[0] + "." + $spaces[1] + "W1");
+			setDrivenKeyframe -dv 1 -v 0 -cd ($switch + "." + $attrName) ($const[0] + "." + $spaces[2] + "W2");
+
+			//global
+			setDrivenKeyframe -dv 2 -v 0 -cd ($switch + "." + $attrName) ($const[0] + "." + $spaces[0] + "W0");
+			setDrivenKeyframe -dv 2 -v 0 -cd ($switch + "." + $attrName) ($const[0] + "." + $spaces[1] + "W1");
+			setDrivenKeyframe -dv 2 -v 1 -cd ($switch + "." + $attrName) ($const[0] + "." + $spaces[2] + "W2");
+		}
+		else if ($type == 2)
+		{
+			string $const[] = `orientConstraint $spaces[0] $spaces[1] $spaces[2] $objLoc[0]`;
+			//create driver drivens
+			//torso
+			setDrivenKeyframe -dv 0 -v 1 -cd ($switch + "." + $attrName) ($const[0] + "." + $spaces[0] + "W0");
+			setDrivenKeyframe -dv 0 -v 0 -cd ($switch + "." + $attrName) ($const[0] + "." + $spaces[1] + "W1");
+			setDrivenKeyframe -dv 0 -v 0 -cd ($switch + "." + $attrName) ($const[0] + "." + $spaces[2] + "W2");
+
+			//body
+			setDrivenKeyframe -dv 1 -v 0 -cd ($switch + "." + $attrName) ($const[0] + "." + $spaces[0] + "W0");
+			setDrivenKeyframe -dv 1 -v 1 -cd ($switch + "." + $attrName) ($const[0] + "." + $spaces[1] + "W1");
+			setDrivenKeyframe -dv 1 -v 0 -cd ($switch + "." + $attrName) ($const[0] + "." + $spaces[2] + "W2");
+
+			//global
+			setDrivenKeyframe -dv 2 -v 0 -cd ($switch + "." + $attrName) ($const[0] + "." + $spaces[0] + "W0");
+			setDrivenKeyframe -dv 2 -v 0 -cd ($switch + "." + $attrName) ($const[0] + "." + $spaces[1] + "W1");
+			setDrivenKeyframe -dv 2 -v 1 -cd ($switch + "." + $attrName) ($const[0] + "." + $spaces[2] + "W2");
+		}
+		
+		break;
+		default:
+		addAttr -ln $attrName -k 1 -at enum -en ($objSpaces[0] + ":" + $objSpaces[1]) $switch;
+		
+		//align the loc to the object
+		constPos ($object,$objLoc[0],0);
+	
+		//duplicate original loc
+		for($i=0;$i<$size;$i++)
+		{
+			string $tempLoc[] = `duplicate $objLoc[0]`;
+			$spaces[$i] = $tempLoc[0];
+		}
+		
+		string $name = returnObjName ($object);
+		string $side = returnSide ($object);
+		
+		//rename new locators
+		for ($i=0;$i<$size;$i++)
+		{
+			$spaces[$i] = `rename $spaces[$i] ($side + "_" + $name + "_" + $objSpaces[$i] + "Space")`;
+		}
+		
+		//parent ctrl and locs
+		parent $object $objLoc[0] ;
+		
+		for ($i=0;$i<$size;$i++)
+		{
+			parent $spaces[$i] ("c_" + $objSpaces[$i] + "_ct");
+		}
+		
+		if ($type == 1)
+		{
+			string $const[] = `parentConstraint $spaces[0] $spaces[1] $spaces[2] $objLoc[0]`;
+			//create driver drivens
+			//space01
+			setDrivenKeyframe -dv 0 -v 1 -cd ($switch + "." + $attrName) ($const[0] + "." + $spaces[0] + "W0");
+			setDrivenKeyframe -dv 0 -v 0 -cd ($switch + "." + $attrName) ($const[0] + "." + $spaces[1] + "W1");
+
+			//space02
+			setDrivenKeyframe -dv 1 -v 0 -cd ($switch + "." + $attrName) ($const[0] + "." + $spaces[0] + "W0");
+			setDrivenKeyframe -dv 1 -v 1 -cd ($switch + "." + $attrName) ($const[0] + "." + $spaces[1] + "W1");
+		}
+		else if ($type == 2)
+		{
+			string $const[] = `orientConstraint $spaces[0] $spaces[1] $spaces[2] $objLoc[0]`;
+			//create driver drivens
+			//space01
+			setDrivenKeyframe -dv 0 -v 1 -cd ($switch + "." + $attrName) ($const[0] + "." + $spaces[0] + "W0");
+			setDrivenKeyframe -dv 0 -v 0 -cd ($switch + "." + $attrName) ($const[0] + "." + $spaces[1] + "W1");
+
+			//space02
+			setDrivenKeyframe -dv 1 -v 0 -cd ($switch + "." + $attrName) ($const[0] + "." + $spaces[0] + "W0");
+			setDrivenKeyframe -dv 1 -v 1 -cd ($switch + "." + $attrName) ($const[0] + "." + $spaces[1] + "W1");
+		}
+		
+		break; 
+	}
+
+}

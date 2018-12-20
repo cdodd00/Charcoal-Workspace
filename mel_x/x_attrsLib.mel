@@ -1,0 +1,247 @@
+/*
+	--x_attrsLib.mel--
+	lock or unlock; hide or unhide or both on different attrs.
+	Also change the rotation order and create a length attr
+	for a given curve arcLength.
+	
+	based on Solsona's script
+
+	Chance B. Dodd 10/9/11
+
+
+*/
+
+// lockHideAttrs
+// will lock and hide the attributes specified
+///////////////////
+
+global proc lockHideAttrs(string $node, string $attrs[])
+{
+	for ($attr in $attrs)
+	{
+		switch ($attr)
+		{
+			case "t":
+				setAttr -lock true -keyable false ($node + ".tx");
+				setAttr -lock true -keyable false ($node + ".ty");
+				setAttr -lock true -keyable false ($node + ".tz");
+			break;
+			
+			case "r":
+				setAttr -lock true -keyable false ($node + ".rx");
+				setAttr -lock true -keyable false ($node + ".ry");
+				setAttr -lock true -keyable false ($node + ".rz");
+			break;
+			
+			case "s":
+				setAttr -lock true -keyable false ($node + ".sx");
+				setAttr -lock true -keyable false ($node + ".sy");
+				setAttr -lock true -keyable false ($node + ".sz");
+			break;
+			
+			default:
+				setAttr -lock true -keyable false ($node + "." + $attr);
+			break;
+		}
+	}
+}
+
+// unLockUnHideAttrs
+// unlocks and unhides attrs
+////////////////
+
+global proc unLockUnHideAttrs(string $node, string $attrs[])
+{
+	for ($attr in $attrs)
+	{
+		switch ($attr)
+		{
+			case "t":
+				setAttr -lock false -keyable true ($node + ".tx");
+				setAttr -lock false -keyable true ($node + ".ty");
+				setAttr -lock false -keyable true ($node + ".tz");
+			break;
+			
+			case "r":
+				setAttr -lock false -keyable true ($node + ".rx");
+				setAttr -lock false -keyable true ($node + ".ry");
+				setAttr -lock false -keyable true ($node + ".rz");
+			break;
+			
+			case "s":
+				setAttr -lock false -keyable true ($node + ".sx");
+				setAttr -lock false -keyable true ($node + ".sy");
+				setAttr -lock false -keyable true ($node + ".sz");
+			break;
+			
+			default:
+				setAttr -lock false -keyable true ($node + "." + $attr);
+			break;
+		}
+	}
+}
+
+// hideAttrs
+// hide the attributes of given object
+///////////////
+
+global proc hideAttrs(string $node, string $attrs[])
+{
+	for ($attr in $attrs)
+	{
+		switch ($attr)
+		{
+			case "t":
+				setAttr  -keyable false ($node + ".tx");
+				setAttr  -keyable false ($node + ".ty");
+				setAttr  -keyable false ($node + ".tz");
+			break;
+			
+			case "r":
+				setAttr  -keyable false ($node + ".rx");
+				setAttr  -keyable false ($node + ".ry");
+				setAttr  -keyable false ($node + ".rz");
+			break;
+			
+			case "s":
+				setAttr  -keyable false ($node + ".sx");
+				setAttr  -keyable false ($node + ".sy");
+				setAttr  -keyable false ($node + ".sz");
+			break;
+			
+			default:
+				setAttr -keyable false ($node + "." + $attr);
+			break;
+		}
+	}
+}
+
+// unHideAttrs
+// unhides the attrs of a given object
+//////////////////
+
+global proc unHideAttrs(string $node, string $attrs[])
+{
+	for ($attr in $attrs)
+	{
+		switch ($attr)
+		{
+			case "t":
+				setAttr  -keyable true ($node + ".tx");
+				setAttr  -keyable true ($node + ".ty");
+				setAttr  -keyable true ($node + ".tz");
+			break;
+			
+			case "r":
+				setAttr  -keyable true ($node + ".rx");
+				setAttr  -keyable true ($node + ".ry");
+				setAttr  -keyable true ($node + ".rz");
+			break;
+			
+			case "s":
+				setAttr  -keyable true ($node + ".sx");
+				setAttr  -keyable true ($node + ".sy");
+				setAttr  -keyable true ($node + ".sz");
+			break;
+			
+			default:
+				setAttr -keyable true ($node + "." + $attr);
+			break;
+		}
+	}
+}
+
+// lockAttrs
+// locks the attrs of a given object
+//////////////////
+
+global proc lockAttrs(string $node, string $attrs[])
+{
+	for ($attr in $attrs)
+	{
+		switch ($attr)
+		{
+			case "t":
+				setAttr -lock true ($node + ".tx");
+				setAttr -lock true ($node + ".ty");
+				setAttr -lock true ($node + ".tz");
+			break;
+			
+			case "r":
+				setAttr -lock true ($node + ".rx");
+				setAttr -lock true ($node + ".ry");
+				setAttr -lock true ($node + ".rz");
+			break;
+			
+			case "s":
+				setAttr -lock true ($node + ".sx");
+				setAttr -lock true ($node + ".sy");
+				setAttr -lock true ($node + ".sz");
+			break;
+			
+			default:
+				setAttr -lock true ($node + "." + $attr);
+			break;
+		}
+	}
+}
+
+// unLockAttrs
+// unlocks the attrs of a given object
+///////////////////
+
+global proc unLockAttrs(string $node, string $attrs[])
+{
+	for ($attr in $attrs)
+	{
+		switch ($attr)
+		{
+			case "t":
+				setAttr -lock false ($node + ".tx");
+				setAttr -lock false ($node + ".ty");
+				setAttr -lock false ($node + ".tz");
+			break;
+			
+			case "r":
+				setAttr -lock false ($node + ".rx");
+				setAttr -lock false ($node + ".ry");
+				setAttr -lock false ($node + ".rz");
+			break;
+			
+			case "s":
+				setAttr -lock false ($node + ".sx");
+				setAttr -lock false ($node + ".sy");
+				setAttr -lock false ($node + ".sz");
+			break;
+			
+			default:
+				setAttr -lock false ($node + "." + $attr);
+			break;
+		}
+	}	
+}
+
+// changeRotOrder
+// changes the rotation order of given object
+///////////////////
+
+global proc changeRotOrder(string $node, int $rotOrder)
+{
+	setAttr ($node + ".rotateOrder") $rotOrder;	
+}
+
+// addLengthAttr
+// adds a length attr to given object using the arcLength
+// attr of a curve info node
+//////////////////
+
+global proc addLengthAttr(string $ctrl, string $attr, string $arcLength)
+{
+	//add the attr to the control
+	addAttr -ln $attr -at double -keyable true $ctrl;
+
+	connectAttr -f ($arcLength) ($ctrl + "." + $attr);
+
+	setAttr -e -lock true ($ctrl + "." + $attr);
+}
+

@@ -1,0 +1,46 @@
+/*
+	--x_duplicateCtrls.mel--
+	Duplicates selected controls and zeros them out at the origin.
+	
+	Chance B. Dodd 10/29/14
+	
+	Useful for taking already created controls on a rig and duplicating
+	them and putting them back to the origin for a new rig.
+	
+	Must be a nurbs curve
+
+	Duplicate, grab the shape from the dupe, delete the dupe, rename new shape.
+*/
+
+global proc x_duplicateCtrls ()
+{
+	//source
+	source x_stringLib.mel;
+	source x_relativesLib.mel;
+	
+	//select objects to duplicate
+	string $sel[] = `ls -sl`;
+	//string $shapes[] = `listRelatives -s`;
+	string $grp;
+	string $shape[];
+	
+	//for each object select get the shape and duplicate it
+	for ($obj in $sel)
+	{
+		string $side = `returnSide ($obj)`;
+		string $name = `returnObjName ($obj)`;
+		string $newObj[] = `duplicate -n "tempDupe" $obj`;
+		//deleteChildren ($newObj[0]);
+		$shape = `listRelatives -s $newObj[0]`;
+		
+		//create empty group to parent the new shape to
+		$grp = `createNode transform -n ($side + "_" + $name + "_shp")`;
+		
+		//parent
+		parent -r -s $shape[0] $grp;
+		
+		rename $shape[0] ($side + "_" + $name + "_shpShape");
+		delete $newObj[0];
+		
+	}
+}
